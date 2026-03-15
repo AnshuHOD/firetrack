@@ -1,0 +1,52 @@
+
+> firetrack@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./app/api/report/route.ts
+Error: 
+  [31mx[0m Expected unicode escape
+    ,-[[36;1;4mC:\Users\Lenovo\Desktop\WEB_INSURANCE\firetrack\app\api\report\route.ts[0m:9:1]
+ [2m 9[0m |     if (result.success) {
+ [2m10[0m |       return NextResponse.json({ 
+ [2m11[0m |         success: true, 
+ [2m12[0m |         message: \`Report processed. \${result.count} new leads were included.\` 
+    : [31;1m                 ^[0m
+ [2m13[0m |       });
+ [2m14[0m |     } else {
+ [2m15[0m |       return NextResponse.json({ 
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/api/report/route.ts
+
+./app/dashboard/page.tsx
+Error: 
+  [31mx[0m Expected unicode escape
+    ,-[[36;1;4mC:\Users\Lenovo\Desktop\WEB_INSURANCE\firetrack\app\dashboard\page.tsx[0m:28:1]
+ [2m28[0m |             });
+ [2m29[0m |           } else {
+ [2m30[0m |             // Include incidents without leads just for the map
+ [2m31[0m |             normalizedLeads.push({ id: \`no-lead-\${incident.id}\`, incidents: incident });
+    : [31;1m                                       ^[0m
+ [2m32[0m |           }
+ [2m33[0m |         });
+ [2m34[0m |         
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+
+
+> Build failed because of webpack errors
