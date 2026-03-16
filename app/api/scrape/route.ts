@@ -3,7 +3,7 @@ import { scrapeAllSources } from '@/lib/scraper';
 import { extractLeadFromNews } from '@/lib/aiExtractor';
 import { saveIncidentAndLead } from '@/lib/db';
 
-export async function POST() {
+export async function GET() {
   try {
     console.log(`[Manual Scrape] Starting job...`);
     const rawIncidents = await scrapeAllSources();
