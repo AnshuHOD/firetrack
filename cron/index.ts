@@ -11,8 +11,8 @@ cron.schedule('*/30 * * * *', async () => {
   console.log(`[${new Date().toISOString()}] Starting 30-min scrape job...`);
   
   try {
-    const rawIncidents = await scrapeAllSources();
-    console.log(`Found ${rawIncidents.length} fire news items`);
+    const { results: rawIncidents } = await scrapeAllSources();
+    console.log(`Found ${rawIncidents.length} raw news items`);
 
     for (const raw of rawIncidents) {
       const result = await extractLeadFromNews(raw.title, raw.description);
