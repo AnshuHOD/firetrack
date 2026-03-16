@@ -13,44 +13,51 @@ export interface ExtractedLead {
   impactReason: string | null;
 }
 
-export async function extractLeadFromNews(newsTitle: string, newsDescription: string): Promise<ExtractedLead | null> {
+export interface ExtractionResult {
+  incidentType: string;
+  leads: ExtractedLead[];
+}
+
+export async function extractLeadFromNews(newsTitle: string, newsDescription: string): Promise<ExtractionResult | null> {
   if (!openai) {
     console.warn("OPENAI_API_KEY is not set. Skipping AI extraction.");
-    // Return mock data for UI building purposes if API key missing
     return {
-      state: "Mock State",
-      city: "Mock City",
-      locality: "Mock Area",
-      businessName: "Mock Business from: " + newsTitle.slice(0, 15),
-      businessType: "Factory",
-      impactLevel: "Medium",
-      impactReason: "Mocked locally without OpenAI API Key"
+      incidentType: "Fire",
+      leads: [{
+        state: "Mock State",
+        city: "Mock City",
+        locality: "Mock Area",
+        businessName: "Mock Business",
+        businessType: "Factory",
+        impactLevel: "Medium",
+        impactReason: "Mocked locally"
+      }]
     };
   }
 
   const prompt = `
-You are an expert data extractor. Analyze this Indian fire incident news and extract structured data.
+You are an expert data extractor for Indian news. Analyze this incident and provide structured output.
 
 NEWS TITLE: ${newsTitle}
 NEWS DESCRIPTION: ${newsDescription}
 
-Extract and return ONLY a valid JSON object (no markdown, no explanation) with this exact structure:
-{
-  "state": "state name or null",
-  "city": "city name or null",
-  "locality": "area/mohalla/locality or null",
-  "businessName": "name of affected shop/factory/warehouse or null",
-  "businessType": "type like Textile Factory / Godown / Market / Residential / null",
-  "impactLevel": "High" or "Medium" or "Low",
-  "impactReason": "brief reason for impact level in 1 sentence"
-}
+IMPORTANT: Provide an array of leads. If multiple shops, factories, houses, or people are affected, extract each one as a separate object in the "leads" array.
 
-Rules:
-- impactLevel = High if factory/warehouse/industrial unit burned
-- impactLevel = Medium if shop/commercial establishment burned
-- impactLevel = Low if residential/vehicle/minor fire
-- If info not available, use null
-- Return ONLY the JSON, nothing else
+Return ONLY a valid JSON object:
+{
+  "incidentType": "Fire / Flood / Theft / Accident / New Development / etc.",
+  "leads": [
+    {
+      "state": "state name or null",
+      "city": "city name or null",
+      "locality": "area/mohalla/locality or null",
+      "businessName": "name of affected entity/shop/factory or null",
+      "businessType": "type (e.g., Textile Factory, Warehouse, Residential, etc.) or null",
+      "impactLevel": "High" or "Medium" or "Low",
+      "impactReason": "brief reason why this entity was affected"
+    }
+  ]
+}
 `;
 
   try {
@@ -58,13 +65,12 @@ Rules:
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.1,
-      max_tokens: 500,
+      max_tokens: 1000,
     });
 
     const text = response.choices[0].message.content || '{}';
-    // Clean up potential markdown formatting block
     const cleanText = text.replace(/```json|```/gi, '').trim();
-    return JSON.parse(cleanText) as ExtractedLead;
+    return JSON.parse(cleanText) as ExtractionResult;
   } catch (err) {
     console.error("AI Extraction failed:", err);
     return null;

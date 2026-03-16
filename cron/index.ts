@@ -15,19 +15,10 @@ cron.schedule('*/30 * * * *', async () => {
     console.log(`Found ${rawIncidents.length} fire news items`);
 
     for (const raw of rawIncidents) {
-      const extracted = await extractLeadFromNews(raw.title, raw.description);
-      if (!extracted) continue;
+      const result = await extractLeadFromNews(raw.title, raw.description);
+      if (!result) continue;
 
-      const contacts = extracted.businessName 
-        ? await findBusinessContact(extracted.businessName, extracted.city || '')
-        : { phones: [], emails: [] };
-
-      await saveIncidentAndLead({
-        ...raw,
-        ...extracted,
-        contactPhone: contacts.phones[0] || null,
-        contactEmail: contacts.emails[0] || null,
-      });
+      await saveIncidentAndLead(raw, result);
     }
 
     console.log(`Scrape job complete.`);

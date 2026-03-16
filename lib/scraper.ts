@@ -25,13 +25,21 @@ const NEWS_SOURCES = [
   { name: "Google News", url: "https://news.google.com/rss/search?q=fire+india&hl=en-IN&gl=IN&ceid=IN:en" },
 ];
 
-const FIRE_KEYWORDS = [
+const INCIDENT_KEYWORDS = [
+  // Fire incidents
   "fire breakout", "fire incident", "building fire", "factory fire",
   "warehouse fire", "shop fire", "market fire", "fire accident",
   "blaze", "inferno", "short circuit fire", "godown fire",
   "aag lagi", "aag lagne", "ag lagi", "dahaka",
-  "fire india", "fire delhi", "fire mumbai", "fire kolkata",
-  "fire chennai", "fire bangalore", "fire hyderabad"
+  // Natural Disasters
+  "flood", "flood situation", "heavy rain damage", "cyclone", "storm damage",
+  "earthquake", "landslide", "cloudburst",
+  // Business & Property Incidents
+  "theft", "robbery", "burglary", "looted", "vandalized",
+  "property damage", "building collapse", "bridge collapse",
+  // Business Developments (New Leads)
+  "new factory", "new plant", "inaugurated", "expansion", "new showroom",
+  "opening soon", "business development", "new project india"
 ];
 
 const parser = new Parser();
@@ -70,7 +78,7 @@ export async function scrapeAllSources(): Promise<RawIncident[]> {
       const text = `${title} ${description}`.toLowerCase();
 
       // Check if any fire keyword matches
-      const isFireNews = FIRE_KEYWORDS.some(kw => text.includes(kw.toLowerCase()));
+      const isFireNews = INCIDENT_KEYWORDS.some(kw => text.includes(kw.toLowerCase()));
       if (!isFireNews) continue;
 
       // Generate dedup hash to avoid storing same incident twice

@@ -14,21 +14,13 @@ export async function GET() {
 
     for (const raw of rawIncidents) {
       processedCount++;
-      const extracted = await extractLeadFromNews(raw.title, raw.description);
-      
-      const payload = {
-        ...raw,
-        ...(extracted ? extracted : {
-            state: null, city: null, locality: null,
-            businessName: null, businessType: null,
-            impactLevel: null, impactReason: null
-        }),
-        contactPhone: null, // to be populated by SerpAPI later
-        contactEmail: null,
-      };
+      const result = await extractLeadFromNews(raw.title, raw.description);
+      if (!result) continue;
 
-      const result = await saveIncidentAndLead(payload as any);
-      if (result.status === 'success') {
+      // Extract each lead and find contacts
+      const saveResult = await saveIncidentAndLead(raw, result);
+      
+      if (saveResult.status === 'success') {
         savedCount++;
       }
     }
@@ -38,7 +30,7 @@ export async function GET() {
       scraped: rawIncidents.length, 
       processed: processedCount,
       saved: savedCount,
-      message: `Scrape complete. Saved ${savedCount} new incidents from ${rawIncidents.length} raw matches.` 
+      message: `Scrape complete. Saved ${savedCount} new incidents with multiple potential leads.` 
     });
   } catch (error: any) {
     console.error(`[Manual Scrape Error]:`, error.message);

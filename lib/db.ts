@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { RawIncident } from './scraper';
-import { ExtractedLead } from './aiExtractor';
+import { ExtractedLead, ExtractionResult } from './aiExtractor';
+import { findBusinessContact } from './contactFinder';
 
 const supabaseUrl = process.env.SUPABASE_URL || 'https://mock.supabase.co';
 const supabaseKey = process.env.SUPABASE_ANON_KEY || 'mock-key';
@@ -12,7 +13,7 @@ export interface IncidentLeadData extends RawIncident, ExtractedLead {
   contactEmail?: string | null;
 }
 
-export async function saveIncidentAndLead(data: IncidentLeadData) {
+export async function saveIncidentAndLead(data: RawIncident, extraction: ExtractionResult) {
   if (supabaseUrl.includes('mock')) {
     console.log("Mocking save logic since no real DB URL is provided.");
     return { status: 'success', incidentId: `mock-${Date.now()}` };
@@ -28,16 +29,12 @@ export async function saveIncidentAndLead(data: IncidentLeadData) {
       source_url: data.sourceUrl,
       published_at: data.publishedAt.toISOString(),
       dedup_hash: data.dedupHash,
-      state: data.state,
-      city: data.city,
-      locality: data.locality,
-      impact_level: data.impactLevel,
+      incident_type: extraction.incidentType,
       is_processed: true
     }])
     .select('id')
     .single();
 
-  // If duplicate, it fails or returns error due to unique constraint on dedup_hash
   if (incidentError || !incident) {
     if (incidentError?.code === '23505') { // Unique violation
       return { status: 'duplicate' };
@@ -46,26 +43,32 @@ export async function saveIncidentAndLead(data: IncidentLeadData) {
     return { status: 'error', error: incidentError };
   }
 
-  // Save Lead if applicable business was extracted
-  if (data.businessName || data.businessType) {
-    const { error: leadError } = await supabase
-      .from('leads')
-      .insert([{
-        incident_id: incident.id,
-        business_name: data.businessName,
-        business_type: data.businessType,
-        contact_phone: data.contactPhone,
-        contact_email: data.contactEmail,
-        lead_source: 'AI Extracted'
-      }]);
+  // Save multiple Leads
+  let savedLeadsCount = 0;
+  for (const lead of extraction.leads) {
+    if (lead.businessName || lead.businessType) {
+      // Find contact info for this specific lead
+      const contacts = lead.businessName 
+        ? await findBusinessContact(lead.businessName, lead.city || '')
+        : { phones: [], emails: [] };
 
-    if (leadError) {
-      console.error("Failed to insert lead:", leadError);
-      return { status: 'error', error: leadError };
+      const { error: leadError } = await supabase
+        .from('leads')
+        .insert([{
+          incident_id: incident.id,
+          business_name: lead.businessName,
+          business_type: lead.businessType,
+          contact_phone: contacts.phones[0] || null,
+          contact_email: contacts.emails[0] || null,
+          lead_source: 'AI Extracted'
+        }]);
+
+      if (!leadError) savedLeadsCount++;
+      else console.error("Failed to insert lead:", leadError);
     }
   }
 
-  return { status: 'success', incidentId: incident.id };
+  return { status: 'success', incidentId: incident.id, leadsSaved: savedLeadsCount };
 }
 
 export async function fetchRecentLeadsWithIncidents() {

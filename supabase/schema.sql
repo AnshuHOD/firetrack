@@ -11,6 +11,7 @@ CREATE TABLE incidents (
   state TEXT,
   city TEXT,
   locality TEXT,              -- Mohalla/Area
+  incident_type TEXT,         -- "Fire", "Flood", "Theft", etc.
   latitude DOUBLE PRECISION,
   longitude DOUBLE PRECISION,
   impact_level TEXT CHECK (impact_level IN ('High', 'Medium', 'Low')),
