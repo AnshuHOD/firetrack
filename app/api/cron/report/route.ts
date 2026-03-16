@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { sendIncidentReport } from '@/lib/emailReport';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   // Optional: Add a simple secret check for security
   // const authHeader = request.headers.get('authorization');
