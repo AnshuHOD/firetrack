@@ -22,31 +22,23 @@ const NEWS_SOURCES = [
   { name: "Dainik Bhaskar", rss: "https://www.bhaskar.com/rss-feed/1061/" },
   { name: "Zee News", rss: "https://zeenews.india.com/rss/india-national-news.xml" },
   // Google News Search (dynamic)
-  { name: "Google News", url: "https://news.google.com/rss/search?q=fire+india&hl=en-IN&gl=IN&ceid=IN:en" },
+  { name: "Google News", url: "https://news.google.com/rss/search?q=(fire+OR+flood+OR+accident+OR+theft+OR+expansion+OR+opening)+India&hl=en-IN&gl=IN&ceid=IN:en" },
 ];
 
 const INCIDENT_KEYWORDS = [
-  // Fire incidents
-  "fire breakout", "fire incident", "building fire", "factory fire",
-  "warehouse fire", "shop fire", "market fire", "fire accident",
-  "blaze", "inferno", "short circuit fire", "godown fire",
-  "aag lagi", "aag lagne", "ag lagi", "dahaka",
-  // Natural Disasters
-  "flood", "flood situation", "heavy rain damage", "cyclone", "storm damage",
-  "earthquake", "landslide", "cloudburst",
-  // Business & Property Incidents
-  "theft", "robbery", "burglary", "looted", "vandalized",
-  "property damage", "building collapse", "bridge collapse",
-  // Business Developments (New Leads)
-  "new factory", "new plant", "inaugurated", "expansion", "new showroom",
-  "opening soon", "business development", "new project india"
+  // Simple Keywords (High match rate)
+  "fire", "blaze", "inferno", "aag", "flood", "cyclone", "theft", "robbery", "accident",
+  "collapse", "opening", "inaugurated", "expansion", "factory", "plant", "warehouse",
+  "godown", "shop", "market", "showroom", "business", "commercial",
+  // Phrases
+  "short circuit", "property damage", "heavy rain", "new project", "breaking news"
 ];
 
 const parser = new Parser();
 
 export async function scrapeAllSources(): Promise<RawIncident[]> {
   const results: RawIncident[] = [];
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000);
 
   // Use Promise.allSettled for parallel fetching to improve speed
   const fetchPromises = NEWS_SOURCES.map(source => 
@@ -65,21 +57,25 @@ export async function scrapeAllSources(): Promise<RawIncident[]> {
     const { source, feed } = result;
 
     for (const item of feed.items) {
-      if (!item.pubDate && !item.isoDate) continue;
+      const pubDateText = item.pubDate || item.isoDate || item.date || '';
+      const pubDate = new Date(pubDateText);
       
-      const pubDate = new Date(item.pubDate || item.isoDate || '');
-      if (isNaN(pubDate.getTime())) continue;
+      // If no date at all, skip if we want recent news, or allow if we want anything
+      if (isNaN(pubDate.getTime())) {
+          // Some feeds don't have dates, let's assume they are current if recent news is needed
+          continue; 
+      }
 
-      // Only process news from last 30 minutes
-      if (pubDate < oneDayAgo) continue;
+      // Filter by date
+      if (pubDate < threeDaysAgo) continue;
 
       const title = item.title || '';
-      const description = item.contentSnippet || '';
+      const description = item.contentSnippet || item.content || item.summary || '';
       const text = `${title} ${description}`.toLowerCase();
 
-      // Check if any fire keyword matches
-      const isFireNews = INCIDENT_KEYWORDS.some(kw => text.includes(kw.toLowerCase()));
-      if (!isFireNews) continue;
+      // Broad matching
+      const isRecordable = INCIDENT_KEYWORDS.some(kw => text.includes(kw.toLowerCase()));
+      if (!isRecordable) continue;
 
       // Generate dedup hash to avoid storing same incident twice
       const normalizedTitle = title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().slice(0, 80);
