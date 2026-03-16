@@ -46,7 +46,7 @@ const parser = new Parser();
 
 export async function scrapeAllSources(): Promise<RawIncident[]> {
   const results: RawIncident[] = [];
-  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
   // Use Promise.allSettled for parallel fetching to improve speed
   const fetchPromises = NEWS_SOURCES.map(source => 
@@ -71,7 +71,7 @@ export async function scrapeAllSources(): Promise<RawIncident[]> {
       if (isNaN(pubDate.getTime())) continue;
 
       // Only process news from last 30 minutes
-      if (pubDate < thirtyMinutesAgo) continue;
+      if (pubDate < oneDayAgo) continue;
 
       const title = item.title || '';
       const description = item.contentSnippet || '';
