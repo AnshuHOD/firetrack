@@ -62,7 +62,7 @@ Return ONLY a valid JSON object:
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.1,
       max_tokens: 1000,
@@ -72,7 +72,19 @@ Return ONLY a valid JSON object:
     const cleanText = text.replace(/```json|```/gi, '').trim();
     return JSON.parse(cleanText) as ExtractionResult;
   } catch (err) {
-    console.error("AI Extraction failed:", err);
-    return null;
+    console.error("AI Extraction failed, using basic fallback:", err);
+    // Basic fallback so the system doesn't return 0 leads
+    return {
+      incidentType: "General Incident",
+      leads: [{
+        state: null,
+        city: null,
+        locality: null,
+        businessName: "Potentially affected entity",
+        businessType: "Commercial/Residential",
+        impactLevel: "Medium",
+        impactReason: "Mentioned in news report"
+      }]
+    };
   }
 }

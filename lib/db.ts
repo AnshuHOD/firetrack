@@ -36,11 +36,14 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
     .single();
 
   if (incidentError || !incident) {
-    if (incidentError?.code === '23505') { // Unique violation
+    if (incidentError?.code === '23505') { 
       return { status: 'duplicate' };
     }
     console.error("Failed to insert incident:", incidentError);
-    return { status: 'error', error: incidentError };
+    return { 
+      status: 'error', 
+      error: incidentError?.message || "Incident table insertion failed. Check if table 'incidents' exists and schema matches." 
+    };
   }
 
   // Save multiple Leads
