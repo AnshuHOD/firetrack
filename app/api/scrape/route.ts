@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { scrapeAllSources } from '@/lib/scraper';
 import { extractLeadFromNews } from '@/lib/aiExtractor';
 import { saveIncidentAndLead } from '@/lib/db';
-
+ 
+export const dynamic = 'force-dynamic';
+ 
 export async function GET() {
   try {
     console.log(`[Manual Scrape] Starting job...`);
