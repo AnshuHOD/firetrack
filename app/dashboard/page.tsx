@@ -52,7 +52,9 @@ export default function DashboardPage() {
       const res = await fetch('/api/scrape', { method: 'POST' });
       const json = await res.json();
       if(json.success) {
-        alert(`Scrape successful! Found ${json.scraped} news, saved ${json.saved} new leads.`);
+        let msg = `Scrape successful!\nItems Found: ${json.scraped}\nAI Extracted: ${json.extracted}\nSaved to DB: ${json.saved}`;
+        if (json.lastError) msg += `\n\nLast Status: ${json.lastError}`;
+        alert(msg);
         fetchLeads();
       } else {
         alert('Scrape failed: ' + json.error);
