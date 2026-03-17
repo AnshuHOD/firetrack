@@ -29,6 +29,9 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
      };
   }
 
+  // Take location/impact from the first lead if available
+  const firstLead = extraction.leads[0];
+  
   // Save incident
   const { data: incident, error: incidentError } = await supabase
     .from('incidents')
@@ -40,6 +43,10 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
       published_at: data.publishedAt.toISOString(),
       dedup_hash: data.dedupHash,
       incident_type: extraction.incidentType,
+      state: firstLead?.state || null,
+      city: firstLead?.city || null,
+      locality: firstLead?.locality || null,
+      impact_level: firstLead?.impactLevel || 'Medium',
       is_processed: true
     }])
     .select('id')
