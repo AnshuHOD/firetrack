@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import LeadTable from '@/components/LeadTable';
 import AnalyticsPanel from '@/components/AnalyticsPanel';
