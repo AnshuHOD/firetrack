@@ -28,6 +28,7 @@ export async function GET() {
     }));
 
     const savedCount = results.filter(r => r.status === 'success').length;
+    const totalLeadsSaved = results.reduce((acc, r) => acc + (r.leadsSaved || 0), 0);
     const extractedCount = results.filter(r => r.status !== 'failed').length;
     const lastError = results.find(r => r.status === 'error')?.error;
 
@@ -35,7 +36,9 @@ export async function GET() {
       success: true, 
       scraped: rawIncidents.length, 
       processed: targets.length,
+      extracted: extractedCount,
       saved: savedCount,
+      leadsSaved: totalLeadsSaved,
       debug,
       lastError,
       dbRef: process.env.SUPABASE_URL?.split('//')[1]?.split('.')[0],

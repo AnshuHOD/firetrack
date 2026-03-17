@@ -72,7 +72,7 @@ export default function DashboardPage() {
       const res = await fetch('/api/scrape');
       const data = await res.json();
       if (data.success) {
-        let msg = `Scrape successful!\nItems Found: ${data.processed}\nExtracted: ${data.extracted}\nSaved: ${data.saved}`;
+        let msg = `Scrape successful!\nIncidents Processed: ${data.processed}\nLeads Saved: ${data.leadsSaved}`;
         if (data.dbRef) msg += `\nDB ID: ${data.dbRef}`;
         if (data.lastError) msg += `\n\nERROR: ${data.lastError}`;
         alert(msg);

@@ -89,11 +89,13 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
          continue;
       }
 
-      // Filter out low-quality/generic names
-      const genericNames = ['unnamed', 'hospital', 'n/a', 'unknown', 'business'];
-      if (genericNames.some(gn => pLead.businessName.toLowerCase().includes(gn)) && 
-          pLead.businessName.split(' ').length < 3) {
-        console.log(`Skipping generic lead name: ${pLead.businessName}`);
+      // Filter out only truly generic/bad names. 
+      // Specific names like "Odisha Hospital" should PASS. 
+      const nameLower = pLead.businessName.toLowerCase();
+      const isTooGeneric = (nameLower === 'hospital' || nameLower === 'unnamed' || nameLower.includes('unnamed hospital'));
+      
+      if (isTooGeneric) {
+        console.log(`Skipping truly generic lead name: ${pLead.businessName}`);
         continue;
       }
 
