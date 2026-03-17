@@ -11,14 +11,29 @@ export async function findBusinessContact(businessName: string, location: string
     const res = await fetch(serpUrl);
     const data = await res.json();
 
-    const allText = JSON.stringify(data.organic_results || '');
+    // Strategy 1: Look in Knowledge Graph (Most accurate)
+    let phones: string[] = [];
+    if (data.knowledge_graph?.phone) {
+        phones.push(data.knowledge_graph.phone);
+    }
+
+    // Strategy 2: Look in Local Results
+    if (data.local_results?.[0]?.phone) {
+        phones.push(data.local_results[0].phone);
+    }
+
+    // Strategy 3: Organic Text Matching (Fallback)
+    const organicText = JSON.stringify(data.organic_results || '');
     const phoneRegex = /(\+91[\s-]?)?[6-9]\d{9}/g;
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
-    const phones = Array.from(new Set(allText.match(phoneRegex) || [])).slice(0, 3);
-    const emails = Array.from(new Set(allText.match(emailRegex) || [])).slice(0, 2);
+    const matchedPhones = organicText.match(phoneRegex) || [];
+    phones = [...phones, ...matchedPhones];
 
-    return { phones, emails };
+    const emails = Array.from(new Set(JSON.stringify(data).match(emailRegex) || [])).slice(0, 2);
+    const uniquePhones = Array.from(new Set(phones)).slice(0, 3);
+
+    return { phones: uniquePhones, emails };
   } catch (e) {
     console.error("SerpAPI failed:", e);
     return { phones: [], emails: [] };

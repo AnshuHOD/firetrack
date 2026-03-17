@@ -75,29 +75,37 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
   for (const lead of extraction.leads) {
     const pLead = cleanLead(lead);
     
-    // Global De-duplication: Avoid saving the same business multiple times across ANY incident
-    if (pLead.businessName) {
-      const { data: globalExistingLead } = await supabase
-        .from('leads')
-        .select('id')
-        .ilike('business_name', pLead.businessName) // Case-insensitive check
-        .limit(1)
-        .maybeSingle();
+      // FUZZY DE-DUPLICATION: Normalize name to find "Hidden" duplicates
+      const normalizeName = (name: string) => {
+        return name.toLowerCase()
+          .replace(/private|limited|ltd|pvt|hospital|medical|center|inc|corp|co|company/g, '')
+          .replace(/[^a-z0-9]/g, '')
+          .trim();
+      };
 
-      if (globalExistingLead) {
-         console.log(`Global Duplicate: Lead for ${pLead.businessName} already exists in DB, skipping.`);
+      const normalizedNew = normalizeName(pLead.businessName);
+
+      // Get all existing leads to check for fuzzy match
+      const { data: allLeads } = await supabase.from('leads').select('business_name');
+      const isDuplicate = allLeads?.some(existing => {
+        const normExisting = normalizeName(existing.business_name);
+        return normExisting === normalizedNew || normalizedNew.includes(normExisting) || normExisting.includes(normalizedNew);
+      });
+
+      if (isDuplicate) {
+         console.log(`Fuzzy Duplicate: ${pLead.businessName} looks too similar to an existing lead, skipping.`);
          continue;
       }
 
       // Filter out only truly generic/bad names (Ghost Leads)
       const nameLower = pLead.businessName.toLowerCase();
-      const genericWords = ['hospital', 'unnamed', 'unidentified', 'unknown', 'business', 'unknown type', 'n/a'];
+      const genericWords = ['hospital', 'unnamed', 'unidentified', 'unknown', 'business', 'unknown type', 'n/a', 'incident', 'property'];
       
       const isTooGeneric = 
         genericWords.some(gw => nameLower === gw) || 
         nameLower.includes('unnamed hospital') ||
         nameLower.includes('unidentified business') ||
-        pLead.businessName.length < 4;
+        nameLower.length < 5; // Slightly longer minimum
       
       if (isTooGeneric) {
         console.log(`Skipping ghost lead: ${pLead.businessName}`);
@@ -119,7 +127,6 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
         }]);
 
       if (!leadError) savedLeadsCount++;
-    }
   }
 
   return { status: 'success', incidentId: incident.id, leadsSaved: savedLeadsCount };

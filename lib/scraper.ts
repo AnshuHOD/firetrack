@@ -14,8 +14,8 @@ const NEWS_SOURCES = [
   { name: "Times of India", rss: "https://timesofindia.indiatimes.com/rssfeeds/4719148.cms" },
   { name: "Hindustan Times", rss: "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml" },
   { name: "NDTV", rss: "https://feeds.feedburner.com/ndtvnews-india-news" },
-  // EXTREME PRECISION: Looking only for heavy property damage/loss
-  { name: "Google News", url: "https://news.google.com/rss/search?q=(fire+loss+OR+factory+fire+OR+industrial+fire+OR+warehouse+blaze+OR+short-circuit+damage)+India+-cricket+-politics+-bollywood&hl=en-IN&gl=IN&ceid=IN:en" },
+  { name: "Google News (Industrial)", url: "https://news.google.com/rss/search?q=(factory+fire+OR+warehouse+blaze+OR+industrial+loss+OR+spinning+mill+OR+plastic+unit)+India&hl=en-IN&gl=IN&ceid=IN:en" },
+  { name: "Google News (General)", url: "https://news.google.com/rss/search?q=(fire+loss+OR+short-circuit+damage)+India+-cricket+-politics+-bollywood&hl=en-IN&gl=IN&ceid=IN:en" },
 ];
 
 const INCIDENT_KEYWORDS = [
