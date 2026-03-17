@@ -49,7 +49,7 @@ export default function DashboardPage() {
   const triggerManualScrape = async () => {
     try {
       setIsScraping(true);
-      const res = await fetch('/api/scrape', { method: 'POST' });
+      const res = await fetch('/api/scrape', { method: 'GET' });
       const json = await res.json();
       if(json.success) {
         let msg = `Scrape successful!\nItems Found: ${json.scraped}\nAI Extracted: ${json.extracted}\nSaved to DB: ${json.saved}`;
