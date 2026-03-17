@@ -19,16 +19,6 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
     return { status: 'success', incidentId: `mock-${Date.now()}` };
   }
 
-  // SAFETY CHECK: Verify Key Mismatch
-  const projectRef = supabaseUrl.split('//')[1]?.split('.')[0];
-  if (supabaseKey !== 'mock-key' && !supabaseKey.includes(projectRef)) {
-     console.error(`CRITICAL: Supabase Key/URL mismatch. URL Ref: ${projectRef}`);
-     return { 
-       status: 'error', 
-       error: `API Key Mismatch! Your SUPABASE_ANON_KEY does NOT belong to project ${projectRef}. Please update Vercel Env Variables with the correct 'anon' key from your Supabase Dashboard.`
-     };
-  }
-
   // Take location/impact from the first lead if available
   const firstLead = extraction.leads[0];
   

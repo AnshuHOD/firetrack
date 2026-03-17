@@ -21,7 +21,7 @@ export async function GET() {
         if (!extraction) return { status: 'failed', title: raw.title };
         
         const saveResult = await saveIncidentAndLead(raw, extraction);
-        return { status: saveResult.status, title: raw.title };
+        return { status: saveResult.status, title: raw.title, error: saveResult.error };
       } catch (e: any) {
         return { status: 'error', error: e.message, title: raw.title };
       }
