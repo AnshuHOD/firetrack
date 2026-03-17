@@ -5,12 +5,13 @@ export const dynamic = 'force-dynamic';
 
 export async function POST() {
   try {
-    // Delete all leads first (foreign key constraint)
-    const { error: leadsError } = await supabase.from('leads').delete().filter('id', 'neq', '00000000-0000-0000-0000-000000000000');
-    if (leadsError) throw leadsError;
-
-    // Delete all incidents
-    const { error: incidentsError } = await supabase.from('incidents').delete().filter('id', 'neq', '00000000-0000-0000-0000-000000000000');
+    // Delete all incidents. Because of ON DELETE CASCADE, leads will be deleted automatically.
+    // Using .not('id', 'is', null) covers all rows since ID is the primary key.
+    const { error: incidentsError } = await supabase
+      .from('incidents')
+      .delete()
+      .not('id', 'is', null);
+    
     if (incidentsError) throw incidentsError;
 
     return NextResponse.json({ success: true, message: "Database purged successfully. All noisy data cleared." });
