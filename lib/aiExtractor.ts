@@ -55,7 +55,7 @@ JSON STRUCTURE:
     {
       "state": "Indian State",
       "city": "Indian City/Town",
-      "businessName": "Full Precise Business Name (NEVER use 'Unnamed', 'Hospital' alone, or generic terms)",
+      "businessName": "Full Precise Business Name (CRITICAL: If not found, use empty array [] for leads. NEVER use 'Unidentified', 'Unknown', or generic placeholders)",
       "businessType": "e.g. Textile Factory, Chemical Plant, Warehouse, Hotel",
       "impactLevel": "High" or "Medium" or "Low",
       "impactReason": "Specific damage justification (e.g. 50lakh stock burnt)"
@@ -64,9 +64,10 @@ JSON STRUCTURE:
 
   RULES:
   1. Return MAX 2 leads per incident.
-  2. If a business name is not explicitly mentioned (e.g. just 'a hospital'), return ZERO leads for that entity.
-  3. Prioritize Factories, Warehouses, and Industrial units over residential/hospitals.
-  4. Ensure each businessName in the list is UNIQUE.
+  2. If a business name is NOT explicitly mentioned (e.g. just 'a factory' or 'a hospital'), return EMPTY ARRAY []. 
+  3. NEVER invent or use generic names like 'Unidentified Business' or 'Unknown Factory'.
+  4. Prioritize Factories, Warehouses, and Industrial units over residential/hospitals.
+  5. Ensure each businessName in the list is UNIQUE.
 }
 `;
 
