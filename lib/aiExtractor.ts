@@ -36,25 +36,28 @@ export async function extractLeadFromNews(newsTitle: string, newsDescription: st
   }
 
   const prompt = `
-You are an expert data extractor for Indian news. Analyze this incident and provide structured output.
+You are an expert data extractor for Indian news focusing on Business Incidents (Fire, Expansion, New Openings).
 
 NEWS TITLE: ${newsTitle}
 NEWS DESCRIPTION: ${newsDescription}
 
-IMPORTANT: Provide an array of leads. If multiple shops, factories, houses, or people are affected, extract each one as a separate object in the "leads" array.
+IMPORTANT: 
+1. If the news is about SPORTS, MOVIES, POLITICS, or NOT a business incident, return an empty "leads" array.
+2. Be extremely aggressive in finding the CITY and STATE. Look at the title and description carefully.
+3. Provide an array of leads. If multiple shops/factories are affected, extract each.
 
 Return ONLY a valid JSON object:
 {
-  "incidentType": "Fire / Flood / Theft / Accident / New Development / etc.",
+  "incidentType": "Fire / Flood / Business Expansion / New Opening",
   "leads": [
     {
-      "state": "state name or null",
-      "city": "city name or null",
-      "locality": "area/mohalla/locality or null",
-      "businessName": "name of affected entity/shop/factory or null",
-      "businessType": "type (e.g., Textile Factory, Warehouse, Residential, etc.) or null",
+      "state": "Indian state name (MANDATORY if found)",
+      "city": "Indian city name (MANDATORY if found)",
+      "locality": "area/mohalla or null",
+      "businessName": "name of shop/factory/entity or null",
+      "businessType": "type (e.g., Textile Factory, Warehouse, etc.) or null",
       "impactLevel": "High" or "Medium" or "Low",
-      "impactReason": "brief reason why this entity was affected"
+      "impactReason": "brief reason"
     }
   ]
 }

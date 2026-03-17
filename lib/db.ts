@@ -83,6 +83,19 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
 
       // For leads, we also want to avoid duplicates if possible
       // But keeping it simple for now as per schema
+      // Check if lead already exists for this incident by business_name
+      const { data: existingLead } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('incident_id', incident.id)
+        .eq('business_name', pLead.businessName)
+        .maybeSingle();
+
+      if (existingLead) {
+         console.log(`Lead for ${pLead.businessName} already exists, skipping.`);
+         continue;
+      }
+
       const { error: leadError } = await supabase
         .from('leads')
         .insert([{

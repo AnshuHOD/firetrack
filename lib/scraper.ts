@@ -11,28 +11,15 @@ export interface RawIncident {
 }
 
 const NEWS_SOURCES = [
-  // RSS Feeds (preferred - faster, reliable)
+  // ... (RSS Feeds)
   { name: "Times of India", rss: "https://timesofindia.indiatimes.com/rssfeeds/4719148.cms" },
   { name: "Hindustan Times", rss: "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml" },
   { name: "NDTV", rss: "https://feeds.feedburner.com/ndtvnews-india-news" },
-  { name: "The Hindu", rss: "https://www.thehindu.com/news/national/feeder/default.rss" },
-  { name: "India Today", rss: "https://www.indiatoday.in/rss/home" },
-  { name: "News18", rss: "https://www.news18.com/rss/india.xml" },
-  { name: "Amar Ujala", rss: "https://www.amarujala.com/rss/breaking-news.xml" },
-  { name: "Dainik Bhaskar", rss: "https://www.bhaskar.com/rss-feed/1061/" },
-  { name: "Zee News", rss: "https://zeenews.india.com/rss/india-national-news.xml" },
-  // Google News Search (dynamic)
-  { name: "Google News", url: "https://news.google.com/rss/search?q=(fire+OR+flood+OR+accident+OR+theft+OR+expansion+OR+opening)+India&hl=en-IN&gl=IN&ceid=IN:en" },
+  { name: "Google News", url: "https://news.google.com/rss/search?q=(fire+OR+blaze+OR+short-circuit+OR+flood+OR+factory+OR+warehouse)+India+-cricket+-film+-movie+-match&hl=en-IN&gl=IN&ceid=IN:en" },
 ];
 
-const INCIDENT_KEYWORDS = [
-  // Simple Keywords (High match rate)
-  "fire", "blaze", "inferno", "aag", "flood", "cyclone", "theft", "robbery", "accident",
-  "collapse", "opening", "inaugurated", "expansion", "factory", "plant", "warehouse",
-  "godown", "shop", "market", "showroom", "business", "commercial",
-  // Phrases
-  "short circuit", "property damage", "heavy rain", "new project", "breaking news"
-];
+const INCIDENT_KEYWORDS = ["fire", "blaze", "short circuit", "flood", "cyclone", "factory", "warehouse", "godown", "shop", "market", "showroom", "business expansion", "opened", "inaugurated"];
+const EXCLUDE_KEYWORDS = ["cricket", "match", "vs", "film", "movie", "teaser", "trailer", "bollywood", "hollywood", "scorecard"];
 
 const parser = new Parser({
   headers: {
@@ -86,6 +73,10 @@ export async function scrapeAllSources(): Promise<{ results: RawIncident[], debu
       const title = item.title || '';
       const description = item.contentSnippet || item.content || item.summary || '';
       const text = `${title} ${description}`.toLowerCase();
+
+      // Filter Noise
+      const hasExclude = EXCLUDE_KEYWORDS.some(ex => text.includes(ex.toLowerCase()));
+      if (hasExclude) continue;
 
       const isRecordable = INCIDENT_KEYWORDS.some(kw => text.includes(kw.toLowerCase()));
       if (!isRecordable) continue;
