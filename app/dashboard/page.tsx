@@ -15,12 +15,10 @@ export default function DashboardPage() {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/leads');
+      // CACHE BUSTING: Add timestamp to prevent stale Vercel Data Cache
+      const res = await fetch(`/api/leads?t=${Date.now()}`, { cache: 'no-store' });
       const json = await res.json();
       if(json.success) {
-        // Flatten the relationship since leads are one-to-one mapped with incidents
-        // But the query actually fetched incidents with nested leads[]
-        // Let's normalize it to an array of lead objects that include their incident data
         const normalizedLeads: any[] = [];
         
         json.data.forEach((incident: any) => {
@@ -29,8 +27,12 @@ export default function DashboardPage() {
               normalizedLeads.push({ ...l, incidents: incident });
             });
           } else {
-            // Include incidents without leads just for the map
-            normalizedLeads.push({ id: `no-lead-${incident.id}`, incidents: incident });
+            // Include incidents without leads for map/counters
+            normalizedLeads.push({ 
+              id: `no-lead-${incident.id}`, 
+              is_incident_only: true, // Marker for stats
+              incidents: incident 
+            });
           }
         });
         
@@ -81,8 +83,11 @@ export default function DashboardPage() {
     }
   };
 
+  // Correct stats based on normalized structure
+  const uniqueIncidentIds = new Set(leads.map(l => l.incidents?.id).filter(Boolean));
+  const incidentCount = uniqueIncidentIds.size;
+  const leadCount = leads.filter(l => l.business_name && !l.is_incident_only).length;
   const highImpactCount = leads.filter(l => l.incidents?.impact_level === 'High').length;
-  const leadCount = leads.filter(l => l.business_name).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -115,7 +120,7 @@ export default function DashboardPage() {
         <div className="bg-card border border-border rounded-lg p-4 flex items-center justify-between">
           <div>
             <p className="text-sm text-textSecondary font-medium">Recorded Incidents</p>
-            <h3 className="text-3xl font-bold mt-1">{loading ? '...' : leads.length}</h3>
+            <h3 className="text-3xl font-bold mt-1">{loading ? '...' : incidentCount}</h3>
           </div>
           <div className="h-12 w-12 bg-accentBlue/10 rounded-full flex items-center justify-center text-accentBlue font-bold text-xl">
             📊
