@@ -32,10 +32,21 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
   // Take location/impact from the first lead if available
   const firstLead = extraction.leads[0];
   
-  // Save incident
+  // CLEANING: Convert string "null" to actual null
+  const cleanLead = (l: any) => {
+    const obj: any = {};
+    for (const key in l) {
+      obj[key] = (l[key] === 'null' || l[key] === 'N/A') ? null : l[key];
+    }
+    return obj;
+  };
+
+  const processedFirstLead = cleanLead(firstLead || {});
+
+  // Save/Update incident (Self-healing logic using Upsert)
   const { data: incident, error: incidentError } = await supabase
     .from('incidents')
-    .insert([{
+    .upsert({
       title: data.title,
       description: data.description,
       news_source: data.newsSource,
@@ -43,48 +54,47 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
       published_at: data.publishedAt.toISOString(),
       dedup_hash: data.dedupHash,
       incident_type: extraction.incidentType,
-      state: firstLead?.state || null,
-      city: firstLead?.city || null,
-      locality: firstLead?.locality || null,
-      impact_level: firstLead?.impactLevel || 'Medium',
+      state: processedFirstLead.state || null,
+      city: processedFirstLead.city || null,
+      locality: processedFirstLead.locality || null,
+      impact_level: processedFirstLead.impactLevel || 'Medium',
       is_processed: true
-    }])
+    }, { onConflict: 'dedup_hash' })
     .select('id')
     .single();
 
   if (incidentError || !incident) {
-    if (incidentError?.code === '23505') { 
-      return { status: 'duplicate' };
-    }
-    console.error("Failed to insert incident:", incidentError);
+    console.error("Failed to upsert incident:", incidentError);
     return { 
       status: 'error', 
-      error: `DB Error: ${incidentError?.message || "Check if 'incidents' table exists."}` 
+      error: `DB Error: ${incidentError?.message}` 
     };
   }
 
   // Save multiple Leads
   let savedLeadsCount = 0;
   for (const lead of extraction.leads) {
-    if (lead.businessName || lead.businessType) {
+    const pLead = cleanLead(lead);
+    if (pLead.businessName || pLead.businessType) {
       // Find contact info for this specific lead
-      const contacts = lead.businessName 
-        ? await findBusinessContact(lead.businessName, lead.city || '')
+      const contacts = pLead.businessName 
+        ? await findBusinessContact(pLead.businessName, pLead.city || '')
         : { phones: [], emails: [] };
 
+      // For leads, we also want to avoid duplicates if possible
+      // But keeping it simple for now as per schema
       const { error: leadError } = await supabase
         .from('leads')
         .insert([{
           incident_id: incident.id,
-          business_name: lead.businessName,
-          business_type: lead.businessType,
+          business_name: pLead.businessName,
+          business_type: pLead.businessType,
           contact_phone: contacts.phones[0] || null,
           contact_email: contacts.emails[0] || null,
           lead_source: 'AI Extracted'
         }]);
 
       if (!leadError) savedLeadsCount++;
-      else console.error("Failed to insert lead:", leadError);
     }
   }
 
