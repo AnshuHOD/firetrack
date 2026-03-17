@@ -35,10 +35,10 @@ export async function GET() {
       success: true, 
       scraped: rawIncidents.length, 
       processed: targets.length,
-      extracted: extractedCount,
       saved: savedCount,
       debug,
       lastError,
+      dbRef: process.env.SUPABASE_URL?.split('//')[1]?.split('.')[0],
       message: `Scrape complete. Processed: ${targets.length}, Saved: ${savedCount}.` 
     });
   } catch (error: any) {

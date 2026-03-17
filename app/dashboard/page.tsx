@@ -24,6 +24,10 @@ export default function DashboardPage() {
       console.log("[Dashboard] Raw API Response:", json);
 
       if(json.success) {
+        if ((!json.data || json.data.length === 0) && json.dbCount > 0) {
+           alert(`DB Check: Database has ${json.dbCount} incidents, but FETCH returned 0. This is likely an RLS permission issue in Supabase!`);
+        }
+
         if (!json.data || json.data.length === 0) {
           console.warn("[Dashboard] API returned SUCCESS but empty array. Check Supabase RLS or DB counts.");
           setLeads([]);
@@ -69,6 +73,7 @@ export default function DashboardPage() {
       const data = await res.json();
       if (data.success) {
         let msg = `Scrape successful!\nItems Found: ${data.processed}\nExtracted: ${data.extracted}\nSaved: ${data.saved}`;
+        if (data.dbRef) msg += `\nDB ID: ${data.dbRef}`;
         if (data.lastError) msg += `\n\nERROR: ${data.lastError}`;
         alert(msg);
         window.location.reload();
