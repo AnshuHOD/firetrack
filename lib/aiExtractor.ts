@@ -55,13 +55,18 @@ JSON STRUCTURE:
     {
       "state": "Indian State",
       "city": "Indian City/Town",
-      "locality": "Specific Area/Mohalla",
-      "businessName": "Full Business/Entity Name",
-      "businessType": "e.g. Textile Factory, Chemical Plant, Grocery Store",
+      "businessName": "Full Precise Business Name (NEVER use 'Unnamed', 'Hospital' alone, or generic terms)",
+      "businessType": "e.g. Textile Factory, Chemical Plant, Warehouse, Hotel",
       "impactLevel": "High" or "Medium" or "Low",
-      "impactReason": "Why is this an insurance lead? (e.g., 50 lakh stock burnt)"
+      "impactReason": "Specific damage justification (e.g. 50lakh stock burnt)"
     }
   ]
+
+  RULES:
+  1. Return MAX 2 leads per incident.
+  2. If a business name is not explicitly mentioned (e.g. just 'a hospital'), return ZERO leads for that entity.
+  3. Prioritize Factories, Warehouses, and Industrial units over residential/hospitals.
+  4. Ensure each businessName in the list is UNIQUE.
 }
 `;
 

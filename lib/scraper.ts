@@ -20,7 +20,8 @@ const NEWS_SOURCES = [
 
 const INCIDENT_KEYWORDS = [
     "fire", "blaze", "burnt", "gutted", "short circuit", "short-circuit", "factory", "warehouse", 
-    "godown", "industrial", "commercial", "property loss", "damage", "boiler blast"
+    "godown", "industrial", "commercial", "property loss", "damage", "boiler blast",
+    "textile", "manufacturing", "chemical", "spinning mill", "plastic factory"
 ];
 
 const EXCLUDE_KEYWORDS = [

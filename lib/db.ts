@@ -74,26 +74,31 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
   let savedLeadsCount = 0;
   for (const lead of extraction.leads) {
     const pLead = cleanLead(lead);
-    if (pLead.businessName || pLead.businessType) {
-      // Find contact info for this specific lead
-      const contacts = pLead.businessName 
-        ? await findBusinessContact(pLead.businessName, pLead.city || '')
-        : { phones: [], emails: [] };
-
-      // For leads, we also want to avoid duplicates if possible
-      // But keeping it simple for now as per schema
-      // Check if lead already exists for this incident by business_name
-      const { data: existingLead } = await supabase
+    
+    // Global De-duplication: Avoid saving the same business multiple times across ANY incident
+    if (pLead.businessName) {
+      const { data: globalExistingLead } = await supabase
         .from('leads')
         .select('id')
-        .eq('incident_id', incident.id)
-        .eq('business_name', pLead.businessName)
+        .ilike('business_name', pLead.businessName) // Case-insensitive check
+        .limit(1)
         .maybeSingle();
 
-      if (existingLead) {
-         console.log(`Lead for ${pLead.businessName} already exists, skipping.`);
+      if (globalExistingLead) {
+         console.log(`Global Duplicate: Lead for ${pLead.businessName} already exists in DB, skipping.`);
          continue;
       }
+
+      // Filter out low-quality/generic names
+      const genericNames = ['unnamed', 'hospital', 'n/a', 'unknown', 'business'];
+      if (genericNames.some(gn => pLead.businessName.toLowerCase().includes(gn)) && 
+          pLead.businessName.split(' ').length < 3) {
+        console.log(`Skipping generic lead name: ${pLead.businessName}`);
+        continue;
+      }
+
+      // Find contact info for this specific lead
+      const contacts = await findBusinessContact(pLead.businessName, pLead.city || '');
 
       const { error: leadError } = await supabase
         .from('leads')
