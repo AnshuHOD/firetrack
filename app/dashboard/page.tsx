@@ -15,31 +15,44 @@ export default function DashboardPage() {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      // CACHE BUSTING: Add timestamp to prevent stale Vercel Data Cache
-      const res = await fetch(`/api/leads?t=${Date.now()}`, { cache: 'no-store' });
+      const res = await fetch(`/api/leads?t=${Date.now()}`, { 
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
       const json = await res.json();
+      
+      console.log("[Dashboard] Raw API Response:", json);
+
       if(json.success) {
+        if (!json.data || json.data.length === 0) {
+          console.warn("[Dashboard] API returned SUCCESS but empty array. Check Supabase RLS or DB counts.");
+          setLeads([]);
+          return;
+        }
+
         const normalizedLeads: any[] = [];
-        
         json.data.forEach((incident: any) => {
           if (incident.leads && incident.leads.length > 0) {
             incident.leads.forEach((l: any) => {
               normalizedLeads.push({ ...l, incidents: incident });
             });
           } else {
-            // Include incidents without leads for map/counters
             normalizedLeads.push({ 
               id: `no-lead-${incident.id}`, 
-              is_incident_only: true, // Marker for stats
+              is_incident_only: true,
               incidents: incident 
             });
           }
         });
         
+        console.log("[Dashboard] Normalized leads count:", normalizedLeads.length);
         setLeads(normalizedLeads);
+      } else {
+        alert(`Dashboard Fetch Failed: ${json.error}`);
       }
-    } catch(err) {
+    } catch(err: any) {
       console.error("Failed to load leads", err);
+      alert(`Critical Load Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
