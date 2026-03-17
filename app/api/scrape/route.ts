@@ -18,17 +18,22 @@ export async function GET() {
     const results = await Promise.all(targets.map(async (raw) => {
       try {
         const extraction = await extractLeadFromNews(raw.title, raw.description);
-        if (!extraction) return { status: 'failed', title: raw.title };
+        if (!extraction) return { status: 'failed', title: raw.title, leadsSaved: 0 };
         
         const saveResult = await saveIncidentAndLead(raw, extraction);
-        return { status: saveResult.status, title: raw.title, error: saveResult.error };
+        return { 
+          status: saveResult.status, 
+          title: raw.title, 
+          error: saveResult.error,
+          leadsSaved: saveResult.leadsSaved || 0 
+        };
       } catch (e: any) {
-        return { status: 'error', error: e.message, title: raw.title };
+        return { status: 'error', error: e.message, title: raw.title, leadsSaved: 0 };
       }
     }));
 
     const savedCount = results.filter(r => r.status === 'success').length;
-    const totalLeadsSaved = results.reduce((acc, r) => acc + (r.leadsSaved || 0), 0);
+    const totalLeadsSaved = results.reduce((acc, r: any) => acc + (r.leadsSaved || 0), 0);
     const extractedCount = results.filter(r => r.status !== 'failed').length;
     const lastError = results.find(r => r.status === 'error')?.error;
 
