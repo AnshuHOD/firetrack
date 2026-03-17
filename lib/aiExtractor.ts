@@ -36,28 +36,30 @@ export async function extractLeadFromNews(newsTitle: string, newsDescription: st
   }
 
   const prompt = `
-You are an expert data extractor for Indian news focusing on Business Incidents (Fire, Expansion, New Openings).
+You are a HIGH-PRECISION insurance lead extractor for Indian News. 
+Your goal is to find businesses or properties that have suffered SIGNIFICANT damage (Fire, Blast, Flood, Collapse).
 
 NEWS TITLE: ${newsTitle}
 NEWS DESCRIPTION: ${newsDescription}
 
-IMPORTANT: 
-1. If the news is about SPORTS, MOVIES, POLITICS, or NOT a business incident, return an empty "leads" array.
-2. Be extremely aggressive in finding the CITY and STATE. Look at the title and description carefully.
-3. Provide an array of leads. If multiple shops/factories are affected, extract each.
+STRICT RULES:
+1. IF the news is about Sports (Cricket, IPL), Entertainment (Movies, Actors), or Politics, return an empty "leads" array immediately.
+2. IF there is NO clear business/commercial property damage, return an empty "leads" array.
+3. MANDATORY: You MUST identify a specific Indian City and State. If the city is vague (e.g., "North India"), attempt to find the exact district.
+4. IDENTITY: Find the specific name of the Shop, Factory, Warehouse, or Hospital.
 
-Return ONLY a valid JSON object:
+JSON STRUCTURE:
 {
-  "incidentType": "Fire / Flood / Business Expansion / New Opening",
+  "incidentType": "Industrial Fire / Commercial Fire / Structure Collapse / etc.",
   "leads": [
     {
-      "state": "Indian state name (MANDATORY if found)",
-      "city": "Indian city name (MANDATORY if found)",
-      "locality": "area/mohalla or null",
-      "businessName": "name of shop/factory/entity or null",
-      "businessType": "type (e.g., Textile Factory, Warehouse, etc.) or null",
-      "impactLevel": "High" or "Medium" or "Low",
-      "impactReason": "brief reason"
+      "state": "Indian State",
+      "city": "Indian City/Town",
+      "locality": "Specific Area/Mohalla",
+      "businessName": "Full Business/Entity Name",
+      "businessType": "e.g. Textile Factory, Chemical Plant, Grocery Store",
+      "impactLevel": "High (Total Loss) / Medium (Partial) / Low",
+      "impactReason": "Why is this an insurance lead? (e.g., 50 lakh stock burnt)"
     }
   ]
 }
