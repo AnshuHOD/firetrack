@@ -9,50 +9,35 @@ export async function GET() {
   try {
     console.log(`[Manual Scrape] Starting job...`);
     const { results: rawIncidents, debug } = await scrapeAllSources();
-    let processedCount = 0;
-    let extractedCount = 0;
-    let savedCount = 0;
-    let lastError = "";
+    
+    // LIMIT TO TOP 5 for reliability during manual/cron trigger
+    const targets = rawIncidents.slice(0, 5);
+    
+    console.log(`[Manual Scrape] Processing top ${targets.length} incidents in parallel...`);
 
-    // MOCK NEWS for testing when real news is 0
-    if (rawIncidents.length === 0) {
-        rawIncidents.push({
-            title: "Test: Minor short circuit in Delhi factory",
-            description: "A minor short circuit was reported in an Okhla textile factory today.",
-            sourceUrl: "http://example.com/test",
-            publishedAt: new Date(),
-            newsSource: "Debug System",
-            dedupHash: "debug-hash-" + Date.now()
-        });
-    }
-
-    for (const raw of rawIncidents) {
-      processedCount++;
-      const result = await extractLeadFromNews(raw.title, raw.description);
-      if (!result) {
-          lastError = "AI Extraction failed for news: " + raw.title;
-          continue;
+    const results = await Promise.all(targets.map(async (raw) => {
+      try {
+        const extraction = await extractLeadFromNews(raw.title, raw.description);
+        if (!extraction) return { status: 'failed', title: raw.title };
+        
+        const saveResult = await saveIncidentAndLead(raw, extraction);
+        return { status: saveResult.status, title: raw.title };
+      } catch (e: any) {
+        return { status: 'error', error: e.message, title: raw.title };
       }
-      extractedCount++;
+    }));
 
-      const saveResult = await saveIncidentAndLead(raw, result);
-      
-      if (saveResult.status === 'success') {
-        savedCount++;
-      } else {
-        lastError = `DB Save failed (${saveResult.status}): ` + (saveResult.error || "Unknown error");
-      }
-    }
+    const savedCount = results.filter(r => r.status === 'success').length;
+    const extractedCount = results.filter(r => r.status !== 'failed').length;
 
     return NextResponse.json({ 
       success: true, 
       scraped: rawIncidents.length, 
-      processed: processedCount,
+      processed: targets.length,
       extracted: extractedCount,
       saved: savedCount,
       debug,
-      lastError,
-      message: `Scrape complete. Scraped: ${rawIncidents.length}, Extracted: ${extractedCount}, Saved: ${savedCount}.` 
+      message: `Scrape complete. Processed: ${targets.length}, Saved: ${savedCount}.` 
     });
   } catch (error: any) {
     console.error(`[Manual Scrape Error]:`, error.message);

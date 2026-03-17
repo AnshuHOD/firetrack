@@ -19,6 +19,16 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
     return { status: 'success', incidentId: `mock-${Date.now()}` };
   }
 
+  // SAFETY CHECK: Verify Key Mismatch
+  const projectRef = supabaseUrl.split('//')[1]?.split('.')[0];
+  if (supabaseKey !== 'mock-key' && !supabaseKey.includes(projectRef)) {
+     console.error(`CRITICAL: Supabase Key/URL mismatch. URL Ref: ${projectRef}`);
+     return { 
+       status: 'error', 
+       error: `API Key Mismatch! Your SUPABASE_ANON_KEY does NOT belong to project ${projectRef}. Please update Vercel Env Variables with the correct 'anon' key from your Supabase Dashboard.`
+     };
+  }
+
   // Save incident
   const { data: incident, error: incidentError } = await supabase
     .from('incidents')
@@ -42,7 +52,7 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
     console.error("Failed to insert incident:", incidentError);
     return { 
       status: 'error', 
-      error: incidentError?.message || "Incident table insertion failed. Check if table 'incidents' exists and schema matches." 
+      error: `DB Error: ${incidentError?.message || "Check if 'incidents' table exists."}` 
     };
   }
 
