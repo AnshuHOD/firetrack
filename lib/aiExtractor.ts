@@ -58,7 +58,7 @@ JSON STRUCTURE:
       "locality": "Specific Area/Mohalla",
       "businessName": "Full Business/Entity Name",
       "businessType": "e.g. Textile Factory, Chemical Plant, Grocery Store",
-      "impactLevel": "High (Total Loss) / Medium (Partial) / Low",
+      "impactLevel": "High" or "Medium" or "Low",
       "impactReason": "Why is this an insurance lead? (e.g., 50 lakh stock burnt)"
     }
   ]

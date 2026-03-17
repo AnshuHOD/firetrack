@@ -29,6 +29,7 @@ export async function GET() {
 
     const savedCount = results.filter(r => r.status === 'success').length;
     const extractedCount = results.filter(r => r.status !== 'failed').length;
+    const lastError = results.find(r => r.status === 'error')?.error;
 
     return NextResponse.json({ 
       success: true, 
@@ -37,6 +38,7 @@ export async function GET() {
       extracted: extractedCount,
       saved: savedCount,
       debug,
+      lastError,
       message: `Scrape complete. Processed: ${targets.length}, Saved: ${savedCount}.` 
     });
   } catch (error: any) {

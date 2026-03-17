@@ -53,7 +53,9 @@ export default function DashboardPage() {
       const res = await fetch('/api/scrape');
       const data = await res.json();
       if (data.success) {
-        alert(`Scrape successful!\nItems Found: ${data.processed}\nExtracted: ${data.extracted}\nSaved: ${data.saved}`);
+        let msg = `Scrape successful!\nItems Found: ${data.processed}\nExtracted: ${data.extracted}\nSaved: ${data.saved}`;
+        if (data.lastError) msg += `\n\nERROR: ${data.lastError}`;
+        alert(msg);
         window.location.reload();
       } else {
         alert(`Scrape Failed: ${data.error || 'Unknown error'}`);

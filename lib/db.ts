@@ -42,6 +42,15 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
   };
 
   const processedFirstLead = cleanLead(firstLead || {});
+  
+  // Ensure impact_level strictly matches DB constraint
+  let finalImpact = 'Medium';
+  if (processedFirstLead.impactLevel) {
+    const levelStr = String(processedFirstLead.impactLevel).toLowerCase();
+    if (levelStr.includes('high')) finalImpact = 'High';
+    else if (levelStr.includes('low')) finalImpact = 'Low';
+    else finalImpact = 'Medium';
+  }
 
   // Save/Update incident (Self-healing logic using Upsert)
   const { data: incident, error: incidentError } = await supabase
@@ -57,7 +66,7 @@ export async function saveIncidentAndLead(data: RawIncident, extraction: Extract
       state: processedFirstLead.state || null,
       city: processedFirstLead.city || null,
       locality: processedFirstLead.locality || null,
-      impact_level: processedFirstLead.impactLevel || 'Medium',
+      impact_level: finalImpact,
       is_processed: true
     }, { onConflict: 'dedup_hash' })
     .select('id')
