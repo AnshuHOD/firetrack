@@ -14,20 +14,18 @@ const NEWS_SOURCES = [
   { name: "Times of India", rss: "https://timesofindia.indiatimes.com/rssfeeds/4719148.cms" },
   { name: "Hindustan Times", rss: "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml" },
   { name: "NDTV", rss: "https://feeds.feedburner.com/ndtvnews-india-news" },
-  // HIGH PRECISION PROMETHEUS QUERY: Focuses on damage, loss, and specific incident types in India
-  { name: "Google News", url: "https://news.google.com/rss/search?q=(fire+OR+blaze+OR+short-circuit+OR+collapse+OR+blast+OR+explosion+OR+flood)+India+(factory+OR+warehouse+OR+showroom+OR+shop+OR+industrial+OR+commercial)+-cricket+-match+-film+-movie+-teaser+-bolywood+-politics+-score&hl=en-IN&gl=IN&ceid=IN:en" },
+  // EXTREME PRECISION: Looking only for heavy property damage/loss
+  { name: "Google News", url: "https://news.google.com/rss/search?q=(fire+loss+OR+factory+fire+OR+industrial+fire+OR+warehouse+blaze+OR+short-circuit+damage)+India+-cricket+-politics+-bollywood&hl=en-IN&gl=IN&ceid=IN:en" },
 ];
 
 const INCIDENT_KEYWORDS = [
-    "fire", "blaze", "short circuit", "short-circuit", "factory burnt", "warehouse fire", 
-    "godown fire", "shop gutted", "market fire", "boiler blast", "structure collapse",
-    "property damage", "massive loss", "industrial fire", "commercial fire"
+    "fire", "blaze", "burnt", "gutted", "short circuit", "short-circuit", "factory", "warehouse", 
+    "godown", "industrial", "commercial", "property loss", "damage", "boiler blast"
 ];
 
 const EXCLUDE_KEYWORDS = [
-    "cricket", "match", "vs", "ipl", "score", "film", "movie", "teaser", "trailer", 
-    "bollywood", "hollywood", "actor", "actress", "politics", "election", "bjp", "congress",
-    "modi", "rahul", "gaming", "esports", "sunrisers", "hyderabad", "dhruva", "the revenge"
+    "cricket", "match", "vs", "score", "ipl", "bollywood", "politics", "film", "movie", 
+    "teaser", "trailer", "sunrisers", "hyderabad", "dhruva", "revenge", "null", "undefined"
 ];
 
 const parser = new Parser({

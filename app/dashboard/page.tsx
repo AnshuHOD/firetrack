@@ -46,24 +46,35 @@ export default function DashboardPage() {
     fetchLeads();
   }, []);
 
-  const triggerManualScrape = async () => {
+  const handleManualScrape = async () => {
+    setIsScraping(true);
     try {
-      setIsScraping(true);
-      const res = await fetch('/api/scrape', { method: 'GET' });
-      const json = await res.json();
-      if(json.success) {
-        let msg = `Scrape successful!\nItems Found: ${json.scraped}\nAI Extracted: ${json.extracted}\nSaved to DB: ${json.saved}`;
-        if (json.lastError) msg += `\n\nLast Status: ${json.lastError}`;
-        alert(msg);
-        fetchLeads();
+      const res = await fetch('/api/scrape');
+      const data = await res.json();
+      if (data.success) {
+        alert(`Scrape successful!\nItems Found: ${data.processed}\nExtracted: ${data.extracted}\nSaved: ${data.saved}`);
+        window.location.reload();
       } else {
-        alert('Scrape failed: ' + json.error);
+        alert(`Scrape Failed: ${data.error || 'Unknown error'}`);
       }
-    } catch(err) {
-      console.error("Scrape network error:", err);
-      alert('Network error while scraping');
+    } catch (err) {
+      alert("Network Error: Could not trigger scrape.");
     } finally {
       setIsScraping(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!confirm("Are you sure? This will delete all current noisy leads and start fresh.")) return;
+    try {
+      const res = await fetch('/api/admin/purge', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert("Dashboard Reset Successfully!");
+        window.location.reload();
+      }
+    } catch (err) {
+      alert("Failed to reset dashboard.");
     }
   };
 
@@ -74,17 +85,26 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
-        <button 
-          onClick={triggerManualScrape}
-          disabled={isScraping}
-          className="flex items-center gap-2 bg-accentBlue text-white px-4 py-2 rounded-md font-semibold hover:bg-accentBlue/90 transition-colors disabled:opacity-50"
-        >
-          {isScraping ? (
-            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Scraping...</>
-          ) : (
-             <>🔥 Run Manual Scrape</>
-          )}
-        </button>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleReset}
+                className="text-xs text-textSecondary hover:text-accentRed transition-colors border border-border px-3 py-1.5 rounded-md"
+              >
+                Reset Noise
+              </button>
+              <button 
+                onClick={handleManualScrape}
+                disabled={isScraping}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                  isScraping 
+                    ? 'bg-border text-textSecondary cursor-not-allowed' 
+                    : 'bg-accentBlue text-white hover:bg-blue-600 shadow-lg shadow-accentBlue/20'
+                }`}
+              >
+                <RefreshCw className={`w-4 h-4 ${isScraping ? 'animate-spin' : ''}`} />
+                {isScraping ? 'Scraping...' : 'Manual Scrape'}
+              </button>
+            </div>
       </div>
 
       {/* Top Stats Row */}
