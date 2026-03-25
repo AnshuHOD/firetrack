@@ -1,56 +1,47 @@
 import { NextResponse } from 'next/server';
 import { scrapeAllSources } from '@/lib/scraper';
 import { extractLeadFromNews } from '@/lib/aiExtractor';
-import { saveIncidentAndLead } from '@/lib/db';
- 
+import { saveDisasterFromScrape } from '@/lib/db';
+
 export const dynamic = 'force-dynamic';
- 
+
 export async function GET() {
   try {
-    console.log(`[Manual Scrape] Starting job...`);
-    const { results: rawIncidents, debug } = await scrapeAllSources();
-    
-    // LIMIT TO TOP 5 for reliability during manual/cron trigger
-    const targets = rawIncidents.slice(0, 5);
-    
-    console.log(`[Manual Scrape] Processing top ${targets.length} incidents in parallel...`);
+    const { results, debug } = await scrapeAllSources();
 
-    const results = await Promise.all(targets.map(async (raw) => {
-      try {
-        const extraction = await extractLeadFromNews(raw.title, raw.description);
-        if (!extraction) return { status: 'failed', title: raw.title, leadsSaved: 0 };
-        
-        const saveResult = await saveIncidentAndLead(raw, extraction);
-        return { 
-          status: saveResult.status, 
-          title: raw.title, 
-          error: saveResult.error,
-          leadsSaved: saveResult.leadsSaved || 0 
-        };
-      } catch (e: any) {
-        return { status: 'error', error: e.message, title: raw.title, leadsSaved: 0 };
-      }
-    }));
+    if (!results.length) {
+      return NextResponse.json({
+        success: true, processed: 0, leadsSaved: 0, debug,
+        message: 'No new incidents found.',
+      });
+    }
 
-    const savedCount = results.filter(r => r.status === 'success').length;
-    const totalLeadsSaved = results.reduce((acc, r: any) => acc + (r.leadsSaved || 0), 0);
-    const extractedCount = results.filter(r => r.status !== 'failed').length;
-    const lastError = results.find(r => r.status === 'error')?.error;
+    const toProcess = results.slice(0, 5);
+    let totalLeads = 0;
+    let lastError: string | null = null;
 
-    return NextResponse.json({ 
-      success: true, 
-      scraped: rawIncidents.length, 
-      processed: targets.length,
-      extracted: extractedCount,
-      saved: savedCount,
-      leadsSaved: totalLeadsSaved,
+    const processResults = await Promise.allSettled(
+      toProcess.map(async incident => {
+        const extraction = await extractLeadFromNews(incident.title, incident.description);
+        if (!extraction) return { leadsSaved: 0 };
+        const result = await saveDisasterFromScrape(incident, extraction);
+        if (result.status === 'error') { lastError = result.error || 'Unknown'; return { leadsSaved: 0 }; }
+        return { leadsSaved: result.leadsSaved || 0 };
+      })
+    );
+
+    processResults.forEach(r => { if (r.status === 'fulfilled') totalLeads += r.value.leadsSaved; });
+
+    return NextResponse.json({
+      success: true,
+      scraped: results.length,
+      processed: toProcess.length,
+      leadsSaved: totalLeads,
       debug,
       lastError,
-      dbRef: process.env.SUPABASE_URL?.split('//')[1]?.split('.')[0],
-      message: `Scrape complete. Processed: ${targets.length}, Saved: ${savedCount}.` 
+      message: `Processed ${toProcess.length} incidents, saved ${totalLeads} leads.`,
     });
-  } catch (error: any) {
-    console.error(`[Manual Scrape Error]:`, error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

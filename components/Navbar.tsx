@@ -1,29 +1,49 @@
-import Link from "next/link";
-import { Flame, Map, RefreshCw, BarChart2 } from "lucide-react";
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Zap, LayoutDashboard, AlertTriangle, Users, Map } from 'lucide-react';
+
+const NAV_LINKS = [
+  { href: '/dashboard', label: 'Dashboard',  icon: LayoutDashboard },
+  { href: '/events',    label: 'Events',     icon: AlertTriangle },
+  { href: '/leads',     label: 'Leads',      icon: Users },
+  { href: '/map',       label: 'Map',        icon: Map },
+];
 
 export default function Navbar() {
-  return (
-    <nav className="w-full h-16 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-50">
-      <div className="flex items-center gap-2">
-        <Flame className="text-accentRed w-6 h-6" />
-        <Link href="/dashboard" className="text-lg font-bold text-foreground">
-          FireLeadTracker India
-        </Link>
-      </div>
+  const pathname = usePathname();
 
-      <div className="flex items-center gap-6">
-        <Link href="/dashboard" className="flex items-center gap-2 text-textSecondary hover:text-foreground transition-colors">
-          <Map className="w-4 h-4" />
-          <span className="text-sm font-medium">Dashboard</span>
-        </Link>
-        <Link href="/analytics" className="flex items-center gap-2 text-textSecondary hover:text-foreground transition-colors">
-          <BarChart2 className="w-4 h-4" />
-          <span className="text-sm font-medium">Analytics</span>
-        </Link>
-        <button className="flex items-center gap-2 bg-accentBlue/10 text-accentBlue px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-accentBlue/20 transition-colors">
-          <RefreshCw className="w-4 h-4" />
-          Manual Scrape
-        </button>
+  return (
+    <nav className="w-full h-16 bg-card border-b border-border flex items-center justify-between px-8 sticky top-0 z-50">
+      {/* Brand */}
+      <Link href="/dashboard" className="flex items-center gap-2.5">
+        <div className="w-7 h-7 bg-accentBlue rounded-lg flex items-center justify-center">
+          <Zap className="w-4 h-4 text-white" />
+        </div>
+        <span className="text-sm font-bold text-foreground tracking-tight">DisasterLeadTracker</span>
+      </Link>
+
+      {/* Nav links */}
+      <div className="flex items-center gap-2">
+        {NAV_LINKS.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || pathname.startsWith(href + '/');
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? 'page' : undefined}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                active
+                  ? 'bg-accentBlue/15 text-accentBlue'
+                  : 'text-textSecondary hover:text-foreground hover:bg-background'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

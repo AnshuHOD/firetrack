@@ -1,43 +1,37 @@
 import cron from 'node-cron';
 import { scrapeAllSources } from '../lib/scraper';
 import { extractLeadFromNews } from '../lib/aiExtractor';
-import { saveIncidentAndLead } from '../lib/db';
+import { saveDisasterFromScrape } from '../lib/db';
 import { sendIncidentReport } from '../lib/emailReport';
-import { findBusinessContact } from '../lib/contactFinder';
 
-console.log('🚀 FireLeadTracker Cron Server Started!');
+console.log('DisasterLeadTracker Cron Server Started!');
 
+// Scrape every 30 minutes
 cron.schedule('*/30 * * * *', async () => {
-  console.log(`[${new Date().toISOString()}] Starting 30-min scrape job...`);
-  
+  console.log(`[${new Date().toISOString()}] Starting scrape job...`);
   try {
-    const { results: rawIncidents } = await scrapeAllSources();
-    console.log(`Found ${rawIncidents.length} raw news items`);
-
-    for (const raw of rawIncidents) {
-      const result = await extractLeadFromNews(raw.title, raw.description);
-      if (!result) continue;
-
-      await saveIncidentAndLead(raw, result);
+    const { results } = await scrapeAllSources();
+    console.log(`Found ${results.length} raw items.`);
+    for (const raw of results) {
+      const extraction = await extractLeadFromNews(raw.title, raw.description);
+      if (!extraction) continue;
+      await saveDisasterFromScrape(raw, extraction);
     }
-
-    console.log(`Scrape job complete.`);
-  } catch (error) {
-    console.error(`Cron Scrape Error:`, error);
+    console.log('Scrape job complete.');
+  } catch (err) {
+    console.error('Cron scrape error:', err);
   }
 });
 
+// Send email report every 3 hours
 cron.schedule('0 */3 * * *', async () => {
-  console.log(`[${new Date().toISOString()}] Sending 3-hour report...`);
+  console.log(`[${new Date().toISOString()}] Sending report...`);
   try {
     const result = await sendIncidentReport(3);
-    console.log(`Report sent. Status: ${result.success ? 'Success' : 'Failed'}`);
-  } catch (error) {
-    console.error(`Cron Report Error:`, error);
+    console.log(`Report status: ${result.success ? 'sent' : 'failed'}`);
+  } catch (err) {
+    console.error('Cron report error:', err);
   }
 });
 
-process.on('SIGINT', () => {
-  console.log('Cron server shutting down.');
-  process.exit();
-});
+process.on('SIGINT', () => { console.log('Shutting down.'); process.exit(); });

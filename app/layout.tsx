@@ -3,8 +3,8 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "FireLeadTracker India",
-  description: "AI-Powered Fire Incident Monitoring & Lead Generation Platform",
+  title: "DisasterLeadTracker India",
+  description: "AI-Powered Disaster Incident Monitoring & Business Lead Generation Platform",
 };
 
 export default function RootLayout({

@@ -1,22 +1,20 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server';
+import { purgeAll } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
-  try {
-    // Delete all incidents. Because of ON DELETE CASCADE, leads will be deleted automatically.
-    // Using .not('id', 'is', null) covers all rows since ID is the primary key.
-    const { error: incidentsError } = await supabase
-      .from('incidents')
-      .delete()
-      .not('id', 'is', null);
-    
-    if (incidentsError) throw incidentsError;
+export async function POST(req: NextRequest) {
+  // Require CRON_SECRET to prevent unauthorized data deletion
+  const auth = req.headers.get('authorization');
+  const secret = process.env.CRON_SECRET;
+  if (secret && auth !== `Bearer ${secret}`) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
 
-    return NextResponse.json({ success: true, message: "Database purged successfully. All noisy data cleared." });
-  } catch (error: any) {
-    console.error("Purge failed:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  try {
+    await purgeAll();
+    return NextResponse.json({ success: true, message: 'All data purged successfully.' });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
