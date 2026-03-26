@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Download, Phone, Mail, Globe, MapPin, StickyNote, ChevronDown } from 'lucide-react';
+import { Search, Download, Phone, Mail, Globe, MapPin, StickyNote, ChevronDown, Trash2 } from 'lucide-react';
 import LeadStatusBadge, { ScoreBadge, LEAD_STATUSES } from './LeadStatusBadge';
 import DisasterBadge from './DisasterBadge';
 
@@ -30,9 +30,10 @@ interface Props {
   onStatusChange: (id: string, status: string) => void;
   onNoteSave: (id: string, note: string) => void;
   onExport: (format: 'csv' | 'excel' | 'json') => void;
+  onDelete?: (ids: string[]) => void;
 }
 
-export default function BusinessLeadTable({ businesses, onStatusChange, onNoteSave, onExport }: Props) {
+export default function BusinessLeadTable({ businesses, onStatusChange, onNoteSave, onExport, onDelete }: Props) {
   const [search, setSearch]           = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType]   = useState('all');
@@ -40,6 +41,8 @@ export default function BusinessLeadTable({ businesses, onStatusChange, onNoteSa
   const [sortBy, setSortBy]           = useState<'score' | 'distance' | 'name'>('score');
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [copiedId, setCopiedId]       = useState<string | null>(null);
+  const [selected, setSelected]       = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting]   = useState(false);
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -68,8 +71,46 @@ export default function BusinessLeadTable({ businesses, onStatusChange, onNoteSa
       return a.business_name.localeCompare(b.business_name);
     });
 
+  const filteredIds = filtered.map(b => b.id);
+  const allSelected = filtered.length > 0 && filtered.every(b => selected.has(b.id));
+  const someSelected = selected.size > 0;
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelected(prev => {
+        const next = new Set(prev);
+        filteredIds.forEach(id => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelected(prev => {
+        const next = new Set(prev);
+        filteredIds.forEach(id => next.add(id));
+        return next;
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!onDelete || selected.size === 0) return;
+    if (!confirm(`Delete ${selected.size} selected lead${selected.size > 1 ? 's' : ''}? This cannot be undone.`)) return;
+    setIsDeleting(true);
+    onDelete(Array.from(selected));
+    setSelected(new Set());
+    setIsDeleting(false);
+  };
+
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="bg-card border border-border rounded-xl overflow-hidden relative">
       {/* Toolbar */}
       <div className="p-4 border-b border-border flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px]">
@@ -136,6 +177,17 @@ export default function BusinessLeadTable({ businesses, onStatusChange, onNoteSa
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-textSecondary text-xs uppercase tracking-wider">
+              {onDelete && (
+                <th className="px-3 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleSelectAll}
+                    className="accent-accentBlue w-3.5 h-3.5 cursor-pointer"
+                    title="Select all"
+                  />
+                </th>
+              )}
               <th className="text-left px-4 py-3 font-medium">Business</th>
               <th className="text-left px-4 py-3 font-medium">Category</th>
               <th className="text-left px-4 py-3 font-medium">Disaster</th>
@@ -149,118 +201,164 @@ export default function BusinessLeadTable({ businesses, onStatusChange, onNoteSa
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-12 text-textSecondary">No leads found</td>
+                <td colSpan={onDelete ? 9 : 8} className="text-center py-12 text-textSecondary">No leads found</td>
               </tr>
-            ) : filtered.map(b => (
-              <tr key={b.id} className="border-b border-border/50 hover:bg-background/40 transition-colors group">
-                {/* Business */}
-                <td className="px-4 py-3 max-w-[220px]">
-                  <p className="font-semibold text-foreground line-clamp-1">{b.business_name}</p>
-                  {b.address && (
-                    <p className="text-xs text-textSecondary flex items-center gap-1 mt-0.5 line-clamp-1">
-                      <MapPin className="w-3 h-3 flex-shrink-0" />{b.address}
-                    </p>
-                  )}
-                </td>
-
-                {/* Category */}
-                <td className="px-4 py-3 text-xs text-textSecondary max-w-[130px]">
-                  <span className="line-clamp-2">{b.category || '—'}</span>
-                </td>
-
-                {/* Disaster */}
-                <td className="px-4 py-3">
-                  {b.disasters ? (
-                    <div>
-                      <DisasterBadge type={b.disasters.disaster_type} size="sm" />
-                      <p className="text-xs text-textSecondary mt-0.5 line-clamp-1">
-                        {[b.disasters.city, b.disasters.state].filter(Boolean).join(', ')}
-                      </p>
-                    </div>
-                  ) : '—'}
-                </td>
-
-                {/* Distance */}
-                <td className="px-4 py-3 text-xs text-textSecondary whitespace-nowrap">
-                  {b.distance_km != null ? `${b.distance_km} km` : '—'}
-                </td>
-
-                {/* Score */}
-                <td className="px-4 py-3"><ScoreBadge score={b.lead_score} /></td>
-
-                {/* Contact */}
-                <td className="px-4 py-3">
-                  <div className="flex flex-col gap-1">
-                    {b.phone && (
-                      <button onClick={() => copyToClipboard(b.phone ?? '', `${b.id}-phone`)}
-                        aria-label="Copy phone number"
-                        className="flex items-center gap-1.5 text-xs text-accentGreen hover:text-green-400 transition-colors text-left">
-                        <Phone className="w-3 h-3" />
-                        {copiedId === `${b.id}-phone` ? <span className="text-accentGreen font-semibold">Copied!</span> : b.phone}
-                      </button>
-                    )}
-                    {b.email && (
-                      <button onClick={() => copyToClipboard(b.email ?? '', `${b.id}-email`)}
-                        aria-label="Copy email address"
-                        className="flex items-center gap-1.5 text-xs text-accentBlue hover:text-blue-400 transition-colors text-left">
-                        <Mail className="w-3 h-3" />
-                        {copiedId === `${b.id}-email` ? <span className="text-accentBlue font-semibold">Copied!</span> : `${b.email.slice(0, 22)}${b.email.length > 22 ? '…' : ''}`}
-                      </button>
-                    )}
-                    {b.website && (
-                      <a href={b.website.startsWith('http') ? b.website : `https://${b.website}`}
-                        target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-xs text-textSecondary hover:text-foreground transition-colors">
-                        <Globe className="w-3 h-3" />Website
-                      </a>
-                    )}
-                    {!b.phone && !b.email && !b.website && <span className="text-xs text-textSecondary">—</span>}
-                  </div>
-                </td>
-
-                {/* Status */}
-                <td className="px-4 py-3">
-                  <select
-                    value={b.lead_status}
-                    onChange={e => onStatusChange(b.id, e.target.value)}
-                    className="bg-background border border-border rounded-lg px-2 py-1 text-xs text-foreground focus:outline-none focus:border-accentBlue cursor-pointer"
-                  >
-                    {LEAD_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </td>
-
-                {/* Notes */}
-                <td className="px-4 py-3">
-                  {editingNote === b.id ? (
-                    <div className="flex flex-col gap-1">
-                      <textarea
-                        value={noteText}
-                        onChange={e => setNoteText(e.target.value)}
-                        rows={2}
-                        className="w-36 bg-background border border-accentBlue rounded px-2 py-1 text-xs text-foreground resize-none focus:outline-none"
-                        autoFocus
+            ) : filtered.map(b => {
+              const isSelected = selected.has(b.id);
+              return (
+                <tr key={b.id}
+                  className={`border-b border-border/50 transition-colors group ${
+                    isSelected
+                      ? 'bg-accentBlue/5 hover:bg-accentBlue/10'
+                      : 'hover:bg-background/40'
+                  }`}
+                >
+                  {/* Checkbox */}
+                  {onDelete && (
+                    <td className="px-3 py-3">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelect(b.id)}
+                        className="accent-accentBlue w-3.5 h-3.5 cursor-pointer"
                       />
-                      <div className="flex gap-1">
-                        <button onClick={() => { onNoteSave(b.id, noteText); setEditingNote(null); }}
-                          className="text-xs bg-accentBlue text-white px-2 py-0.5 rounded">Save</button>
-                        <button onClick={() => setEditingNote(null)}
-                          className="text-xs text-textSecondary hover:text-foreground px-1">Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button onClick={() => { setEditingNote(b.id); setNoteText(b.notes || ''); }}
-                      className="text-textSecondary hover:text-foreground transition-colors"
-                      title={b.notes || 'Add note'}>
-                      <StickyNote className="w-4 h-4" />
-                      {b.notes && <span className="block text-xs text-accentOrange mt-0.5">Has note</span>}
-                    </button>
+                    </td>
                   )}
-                </td>
-              </tr>
-            ))}
+
+                  {/* Business */}
+                  <td className="px-4 py-3 max-w-[220px]">
+                    <p className="font-semibold text-foreground line-clamp-1">{b.business_name}</p>
+                    {b.address && (
+                      <p className="text-xs text-textSecondary flex items-center gap-1 mt-0.5 line-clamp-1">
+                        <MapPin className="w-3 h-3 flex-shrink-0" />{b.address}
+                      </p>
+                    )}
+                  </td>
+
+                  {/* Category */}
+                  <td className="px-4 py-3 text-xs text-textSecondary max-w-[130px]">
+                    <span className="line-clamp-2">{b.category || '—'}</span>
+                  </td>
+
+                  {/* Disaster */}
+                  <td className="px-4 py-3">
+                    {b.disasters ? (
+                      <div>
+                        <DisasterBadge type={b.disasters.disaster_type} size="sm" />
+                        <p className="text-xs text-textSecondary mt-0.5 line-clamp-1">
+                          {[b.disasters.city, b.disasters.state].filter(Boolean).join(', ')}
+                        </p>
+                      </div>
+                    ) : '—'}
+                  </td>
+
+                  {/* Distance */}
+                  <td className="px-4 py-3 text-xs text-textSecondary whitespace-nowrap">
+                    {b.distance_km != null ? `${b.distance_km} km` : '—'}
+                  </td>
+
+                  {/* Score */}
+                  <td className="px-4 py-3"><ScoreBadge score={b.lead_score} /></td>
+
+                  {/* Contact */}
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-1">
+                      {b.phone && (
+                        <button onClick={() => copyToClipboard(b.phone ?? '', `${b.id}-phone`)}
+                          aria-label="Copy phone number"
+                          className="flex items-center gap-1.5 text-xs text-accentGreen hover:text-green-400 transition-colors text-left">
+                          <Phone className="w-3 h-3" />
+                          {copiedId === `${b.id}-phone` ? <span className="text-accentGreen font-semibold">Copied!</span> : b.phone}
+                        </button>
+                      )}
+                      {b.email && (
+                        <button onClick={() => copyToClipboard(b.email ?? '', `${b.id}-email`)}
+                          aria-label="Copy email address"
+                          className="flex items-center gap-1.5 text-xs text-accentBlue hover:text-blue-400 transition-colors text-left">
+                          <Mail className="w-3 h-3" />
+                          {copiedId === `${b.id}-email` ? <span className="text-accentBlue font-semibold">Copied!</span> : `${b.email.slice(0, 22)}${b.email.length > 22 ? '…' : ''}`}
+                        </button>
+                      )}
+                      {b.website && (
+                        <a href={b.website.startsWith('http') ? b.website : `https://${b.website}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-textSecondary hover:text-foreground transition-colors">
+                          <Globe className="w-3 h-3" />Website
+                        </a>
+                      )}
+                      {!b.phone && !b.email && !b.website && <span className="text-xs text-textSecondary">—</span>}
+                    </div>
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-4 py-3">
+                    <select
+                      value={b.lead_status}
+                      onChange={e => onStatusChange(b.id, e.target.value)}
+                      className="bg-background border border-border rounded-lg px-2 py-1 text-xs text-foreground focus:outline-none focus:border-accentBlue cursor-pointer"
+                    >
+                      {LEAD_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </td>
+
+                  {/* Notes */}
+                  <td className="px-4 py-3">
+                    {editingNote === b.id ? (
+                      <div className="flex flex-col gap-1">
+                        <textarea
+                          value={noteText}
+                          onChange={e => setNoteText(e.target.value)}
+                          rows={2}
+                          className="w-36 bg-background border border-accentBlue rounded px-2 py-1 text-xs text-foreground resize-none focus:outline-none"
+                          autoFocus
+                        />
+                        <div className="flex gap-1">
+                          <button onClick={() => { onNoteSave(b.id, noteText); setEditingNote(null); }}
+                            className="text-xs bg-accentBlue text-white px-2 py-0.5 rounded">Save</button>
+                          <button onClick={() => setEditingNote(null)}
+                            className="text-xs text-textSecondary hover:text-foreground px-1">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setEditingNote(b.id); setNoteText(b.notes || ''); }}
+                        className="text-textSecondary hover:text-foreground transition-colors"
+                        title={b.notes || 'Add note'}>
+                        <StickyNote className="w-4 h-4" />
+                        {b.notes && <span className="block text-xs text-accentOrange mt-0.5">Has note</span>}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+
+      {/* Floating multi-select action bar */}
+      {someSelected && onDelete && (
+        <div className="sticky bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border px-5 py-3 flex items-center justify-between z-30">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-foreground">
+              {selected.size} selected
+            </span>
+            <button
+              onClick={() => setSelected(new Set())}
+              className="text-xs text-textSecondary hover:text-foreground underline"
+            >
+              Clear selection
+            </button>
+          </div>
+          <button
+            onClick={handleBulkDelete}
+            disabled={isDeleting}
+            className="flex items-center gap-2 bg-accentRed text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            {isDeleting ? 'Deleting...' : `Delete (${selected.size})`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

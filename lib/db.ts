@@ -299,6 +299,12 @@ export async function updateBusiness(id: string, payload: Partial<{
   if (error) throw new Error(error.message);
 }
 
+export async function deleteBusinesses(ids: string[]) {
+  if (isMock || !ids.length) return;
+  const { error } = await supabase.from('businesses').delete().in('id', ids);
+  if (error) throw new Error(error.message);
+}
+
 // ─── STATS ────────────────────────────────────────────────────────────────────
 
 export async function fetchDashboardStats() {

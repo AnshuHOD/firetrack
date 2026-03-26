@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchBusinesses } from '@/lib/db';
+import { fetchBusinesses, deleteBusinesses } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +15,19 @@ export async function GET(req: NextRequest) {
     };
     const businesses = await fetchBusinesses(filters);
     return NextResponse.json({ success: true, data: businesses });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { ids } = await req.json();
+    if (!Array.isArray(ids) || !ids.length) {
+      return NextResponse.json({ success: false, error: 'ids array is required' }, { status: 400 });
+    }
+    await deleteBusinesses(ids);
+    return NextResponse.json({ success: true, deleted: ids.length });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

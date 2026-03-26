@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import BusinessLeadTable from '@/components/BusinessLeadTable';
+import Toast from '@/components/Toast';
 
 export default function LeadsPage() {
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
+  const [toast, setToast]           = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -48,6 +50,25 @@ export default function LeadsPage() {
     window.open(`/api/export?format=${format}`, '_blank');
   };
 
+  const handleDelete = async (ids: string[]) => {
+    try {
+      const res = await fetch('/api/businesses', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBusinesses(prev => prev.filter(b => !ids.includes(b.id)));
+        setToast({ type: 'success', message: `Deleted ${data.deleted} lead${data.deleted > 1 ? 's' : ''}.` });
+      } else {
+        setToast({ type: 'error', message: `Delete failed: ${data.error}` });
+      }
+    } catch {
+      setToast({ type: 'error', message: 'Failed to delete leads.' });
+    }
+  };
+
   const total     = businesses.length;
   const newLeads  = businesses.filter(b => b.lead_status === 'New').length;
   const contacted = businesses.filter(b => b.lead_status === 'Contacted').length;
@@ -56,6 +77,7 @@ export default function LeadsPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
         <p className="text-sm text-textSecondary mt-0.5">
@@ -99,6 +121,7 @@ export default function LeadsPage() {
           onStatusChange={handleStatusChange}
           onNoteSave={handleNoteSave}
           onExport={handleExport}
+          onDelete={handleDelete}
         />
       )}
     </div>
