@@ -1,7 +1,6 @@
 export async function findBusinessContact(businessName: string, location: string) {
   if (!process.env.SERPAPI_KEY) {
-    // If no key, skip actual API call to save dev errors
-    return { phones: ['+91-9876543210'], emails: ['contact@' + businessName.replace(/\s/g, '').toLowerCase() + '.com'] };
+    return { phones: [], emails: [] };
   }
 
   const query = `"${businessName}" "${location}" contact phone number`;
