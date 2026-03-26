@@ -130,11 +130,11 @@ export async function searchAndSaveBusinesses(
   const businesses = await findBusinessesNearby(lat, lng, radiusKm);
   if (!businesses.length) return 0;
 
-  // Fetch already-saved business names for this disaster to avoid duplicates
+  // Fetch ALL existing business names globally to avoid cross-disaster duplicates
+  // (e.g. two nearby disasters finding the same shops via Overpass)
   const { data: existing } = await supabase
     .from('businesses')
-    .select('business_name')
-    .eq('disaster_id', disasterId);
+    .select('business_name');
 
   const existingKeys = new Set(
     (existing || []).map((b: any) =>

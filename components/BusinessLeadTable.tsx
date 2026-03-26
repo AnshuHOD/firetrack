@@ -43,6 +43,7 @@ export default function BusinessLeadTable({ businesses, onStatusChange, onNoteSa
   const [copiedId, setCopiedId]       = useState<string | null>(null);
   const [selected, setSelected]       = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting]   = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -102,7 +103,12 @@ export default function BusinessLeadTable({ businesses, onStatusChange, onNoteSa
 
   const handleBulkDelete = async () => {
     if (!onDelete || selected.size === 0) return;
-    if (!confirm(`Delete ${selected.size} selected lead${selected.size > 1 ? 's' : ''}? This cannot be undone.`)) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      setTimeout(() => setConfirmDelete(false), 3000); // reset after 3s if not clicked
+      return;
+    }
+    setConfirmDelete(false);
     setIsDeleting(true);
     onDelete(Array.from(selected));
     setSelected(new Set());
@@ -149,7 +155,25 @@ export default function BusinessLeadTable({ businesses, onStatusChange, onNoteSa
           <span className="text-accentBlue font-semibold w-6">{minScore}</span>
         </div>
 
-        <span className="text-xs text-textSecondary ml-auto">{filtered.length} leads</span>
+        {/* Selection actions — appears inline when items selected */}
+        {someSelected && onDelete ? (
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-xs font-medium text-foreground">{selected.size} selected</span>
+            <button onClick={() => { setSelected(new Set()); setConfirmDelete(false); }}
+              className="text-xs text-textSecondary hover:text-foreground underline">Clear</button>
+            <button onClick={handleBulkDelete} disabled={isDeleting}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50 ${
+                confirmDelete
+                  ? 'bg-red-600 text-white ring-2 ring-red-400/50 animate-pulse'
+                  : 'bg-accentRed text-white hover:bg-red-600'
+              }`}>
+              <Trash2 className="w-3.5 h-3.5" />
+              {isDeleting ? 'Deleting...' : confirmDelete ? 'Confirm Delete?' : `Delete (${selected.size})`}
+            </button>
+          </div>
+        ) : (
+          <span className="text-xs text-textSecondary ml-auto">{filtered.length} leads</span>
+        )}
 
         {/* Export dropdown */}
         <div className="relative">
@@ -335,30 +359,6 @@ export default function BusinessLeadTable({ businesses, onStatusChange, onNoteSa
         </table>
       </div>
 
-      {/* Floating multi-select action bar */}
-      {someSelected && onDelete && (
-        <div className="sticky bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border px-5 py-3 flex items-center justify-between z-30">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-foreground">
-              {selected.size} selected
-            </span>
-            <button
-              onClick={() => setSelected(new Set())}
-              className="text-xs text-textSecondary hover:text-foreground underline"
-            >
-              Clear selection
-            </button>
-          </div>
-          <button
-            onClick={handleBulkDelete}
-            disabled={isDeleting}
-            className="flex items-center gap-2 bg-accentRed text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
-          >
-            <Trash2 className="w-4 h-4" />
-            {isDeleting ? 'Deleting...' : `Delete (${selected.size})`}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
