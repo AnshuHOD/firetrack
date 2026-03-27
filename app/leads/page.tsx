@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import BusinessLeadTable from '@/components/BusinessLeadTable';
 import Toast from '@/components/Toast';
@@ -11,11 +11,11 @@ export default function LeadsPage() {
   const [error, setError]           = useState<string | null>(null);
   const [toast, setToast]           = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res  = await fetch('/api/businesses?limit=500');
+      const res  = await fetch('/api/businesses?limit=500', { cache: 'no-store' });
       const data = await res.json();
       if (data.success) setBusinesses(data.data);
       else throw new Error(data.error || 'Failed to load leads');
@@ -24,9 +24,14 @@ export default function LeadsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const onFocus = () => load();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [load]);
 
   const handleStatusChange = async (id: string, status: string) => {
     setBusinesses(prev => prev.map(b => b.id === id ? { ...b, lead_status: status } : b));

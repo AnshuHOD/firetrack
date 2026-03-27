@@ -301,8 +301,25 @@ export async function updateBusiness(id: string, payload: Partial<{
 
 export async function deleteBusinesses(ids: string[]) {
   if (isMock || !ids.length) return;
+
+  // Find which disasters are affected so we can update their leads_count
+  const { data: affected } = await supabase
+    .from('businesses')
+    .select('disaster_id')
+    .in('id', ids);
+
   const { error } = await supabase.from('businesses').delete().in('id', ids);
   if (error) throw new Error(error.message);
+
+  // Recalculate leads_count for each affected disaster
+  const disasterIds = Array.from(new Set((affected || []).map((b: any) => b.disaster_id).filter(Boolean)));
+  for (const dId of disasterIds) {
+    const { count } = await supabase
+      .from('businesses')
+      .select('id', { count: 'exact', head: true })
+      .eq('disaster_id', dId);
+    await supabase.from('disasters').update({ leads_count: count || 0 }).eq('id', dId);
+  }
 }
 
 // ─── STATS ────────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Plus, RefreshCw, AlertTriangle } from 'lucide-react';
 import AddDisasterModal from '@/components/AddDisasterModal';
 import DisasterTable from '@/components/DisasterTable';
@@ -15,11 +15,11 @@ export default function EventsPage() {
   const [isScraping, setIsScraping] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res  = await fetch('/api/disasters');
+      const res  = await fetch('/api/disasters', { cache: 'no-store' });
       const data = await res.json();
       if (data.success) setDisasters(data.data);
       else throw new Error(data.error || 'Failed to load incidents');
@@ -28,9 +28,14 @@ export default function EventsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const onFocus = () => load();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [load]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this disaster and all its leads?')) return;

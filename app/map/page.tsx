@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import DisasterBadge, { SeverityBadge } from '@/components/DisasterBadge';
@@ -21,19 +21,31 @@ export default function MapPage() {
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
 
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/disasters').then(r => r.json()),
-      fetch('/api/businesses?limit=500').then(r => r.json()),
-    ]).then(([d, b]) => {
+  const loadMap = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [d, b] = await Promise.all([
+        fetch('/api/disasters', { cache: 'no-store' }).then(r => r.json()),
+        fetch('/api/businesses?limit=500', { cache: 'no-store' }).then(r => r.json()),
+      ]);
       if (d.success) setDisasters(d.data);
       else throw new Error(d.error || 'Failed to load disasters');
       if (b.success) setBusinesses(b.data);
       else throw new Error(b.error || 'Failed to load businesses');
-    }).catch((err: any) => {
+    } catch (err: any) {
       setError(err.message || 'Failed to load map data.');
-    }).finally(() => setLoading(false));
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadMap();
+    const onFocus = () => loadMap();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [loadMap]);
 
   const selected = disasters.find(d => d.id === selectedId);
   const filteredBusinesses = selectedId

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import StatsCard from '@/components/StatsCard';
@@ -32,14 +32,14 @@ export default function DashboardPage() {
   const [isScraping, setIsScraping] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [sRes, dRes, bRes] = await Promise.all([
-        fetch('/api/stats'),
-        fetch('/api/disasters'),
-        fetch('/api/businesses?limit=200'),
+        fetch('/api/stats', { cache: 'no-store' }),
+        fetch('/api/disasters', { cache: 'no-store' }),
+        fetch('/api/businesses?limit=200', { cache: 'no-store' }),
       ]);
       const [s, d, b] = await Promise.all([sRes.json(), dRes.json(), bRes.json()]);
       if (s.success) setStats(s.data); else throw new Error(s.error || 'Stats failed');
@@ -50,9 +50,14 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+    const onFocus = () => loadData();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [loadData]);
 
   const handleScrape = async () => {
     setIsScraping(true);
