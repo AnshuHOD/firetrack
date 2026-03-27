@@ -130,21 +130,27 @@ export async function searchAndSaveBusinesses(
   const businesses = await findBusinessesNearby(lat, lng, radiusKm);
   if (!businesses.length) return 0;
 
-  // Fetch ALL existing business names globally to avoid cross-disaster duplicates
-  // (e.g. two nearby disasters finding the same shops via Overpass)
+  // ── Coordinate-based global dedup ──────────────────────────────────────────
+  // Two OSM entries at the exact same lat/lng are the same physical place.
+  // Fetch all existing coordinates once and build a Set of "lat|lng" keys.
   const { data: existing } = await supabase
     .from('businesses')
-    .select('business_name');
+    .select('latitude, longitude');
 
-  const existingKeys = new Set(
-    (existing || []).map((b: any) =>
-      b.business_name.toLowerCase().replace(/[^a-z0-9]/g, '')
-    )
+  const existingCoords = new Set(
+    (existing || []).map((b: any) => `${b.latitude}|${b.longitude}`)
   );
+
+  // Filter out businesses whose coordinates already exist in the DB
+  const newBusinesses = businesses.filter(
+    b => !existingCoords.has(`${b.lat}|${b.lng}`)
+  );
+
+  if (!newBusinesses.length) return 0;
 
   // Enrich with SerpAPI contacts if key is available (for businesses missing phone/email)
   const enrichedBusinesses = await Promise.all(
-    businesses.map(async (b) => {
+    newBusinesses.map(async (b) => {
       if (process.env.SERPAPI_KEY && !b.phone && !b.email) {
         const contact = await findBusinessContact(b.name, b.address || `${lat},${lng}`);
         return {
@@ -157,30 +163,24 @@ export async function searchAndSaveBusinesses(
     })
   );
 
-  // Only insert businesses not already saved for this disaster
-  const toInsert = enrichedBusinesses
-    .filter(b => !existingKeys.has(b.name.toLowerCase().replace(/[^a-z0-9]/g, '')))
-    .map(b => ({
-      disaster_id:   disasterId,
-      business_name: b.name,
-      category:      b.category,
-      address:       b.address,
-      phone:         b.phone || null,
-      email:         b.email || null,
-      website:       b.website || null,
-      latitude:      b.lat,
-      longitude:     b.lng,
-      distance_km:   b.distance_km,
-      lead_score:    calculateLeadScore({ distanceKm: b.distance_km, category: b.category, disasterType, severity }),
-      lead_source:   'OpenStreetMap',
-    }));
-
-  if (!toInsert.length) return 0; // all already exist, nothing new to insert
+  const toInsert = enrichedBusinesses.map(b => ({
+    disaster_id:   disasterId,
+    business_name: b.name,
+    category:      b.category,
+    address:       b.address,
+    phone:         b.phone || null,
+    email:         b.email || null,
+    website:       b.website || null,
+    latitude:      b.lat,
+    longitude:     b.lng,
+    distance_km:   b.distance_km,
+    lead_score:    calculateLeadScore({ distanceKm: b.distance_km, category: b.category, disasterType, severity }),
+    lead_source:   'OpenStreetMap',
+  }));
 
   const { data, error } = await supabase.from('businesses').insert(toInsert).select('id');
   if (!error && data) {
     const saved = data.length;
-    // Increment leads_count rather than overwrite, so repeated searches accumulate correctly
     const { data: dis } = await supabase.from('disasters').select('leads_count').eq('id', disasterId).single();
     const currentCount = dis?.leads_count || 0;
     await supabase.from('disasters').update({ businesses_searched: true, leads_count: currentCount + saved }).eq('id', disasterId);
