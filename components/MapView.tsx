@@ -35,16 +35,16 @@ interface Props {
 }
 
 const DISASTER_COLORS: Record<string, string> = {
-  fire:       '#ef4444',
-  earthquake: '#f97316',
-  flood:      '#3b82f6',
-  explosion:  '#eab308',
-  storm:      '#06b6d4',
-  collapse:   '#a8a29e',
-  chemical:   '#22c55e',
-  tsunami:    '#0ea5e9',
-  landslide:  '#d97706',
-  other:      '#8b5cf6',
+  fire:       '#B84D2C',
+  earthquake: '#C97B3F',
+  flood:      '#7A8C5C',
+  explosion:  '#B89253',
+  storm:      '#9C6B4A',
+  collapse:   '#6B5544',
+  chemical:   '#7A8C5C',
+  tsunami:    '#7A8C5C',
+  landslide:  '#C97B3F',
+  other:      '#9C6B4A',
 };
 
 const DISASTER_ICONS: Record<string, string> = {
@@ -54,11 +54,11 @@ const DISASTER_ICONS: Record<string, string> = {
 };
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return '#ef4444';
-  if (score >= 60) return '#f97316';
-  if (score >= 40) return '#eab308';
-  if (score >= 20) return '#22c55e';
-  return '#6b7280';
+  if (score >= 80) return '#B84D2C';
+  if (score >= 60) return '#C97B3F';
+  if (score >= 40) return '#B89253';
+  if (score >= 20) return '#7A8C5C';
+  return '#9A7F66';
 }
 
 function makeDisasterIcon(type: string, severity: string): L.DivIcon {
@@ -107,11 +107,23 @@ export default function MapView({ disasters, businesses, selectedDisasterId }: P
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
-      className: 'map-tiles-dark',
+      className: 'map-tiles-warm',
     }).addTo(map);
 
     mapRef.current = map;
-    return () => { map.remove(); mapRef.current = null; };
+
+    // Recompute tile sizing after the container settles (fixes blank map when
+    // parent height resolves post-mount).
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(containerRef.current);
+    const t = setTimeout(() => map.invalidateSize(), 200);
+
+    return () => {
+      ro.disconnect();
+      clearTimeout(t);
+      map.remove();
+      mapRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
@@ -218,17 +230,12 @@ export default function MapView({ disasters, businesses, selectedDisasterId }: P
         @keyframes ping {
           75%, 100% { transform: scale(2); opacity: 0; }
         }
-        .map-tiles-dark { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.1); }
-        .leaflet-popup-content-wrapper {
-          background: #1a1a1a !important;
-          color: #fff !important;
-          border: 1px solid #2a2a2a !important;
-          border-radius: 8px !important;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
-        }
-        .leaflet-popup-tip { background: #1a1a1a !important; }
       `}</style>
-      <div ref={containerRef} className="w-full h-full rounded-xl overflow-hidden" />
+      <div
+        ref={containerRef}
+        className="w-full h-full rounded-3xl overflow-hidden border"
+        style={{ borderColor: 'var(--border)' }}
+      />
     </>
   );
 }

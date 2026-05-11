@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Plus, RefreshCw, AlertTriangle, Sparkles } from 'lucide-react';
 import AddDisasterModal from '@/components/AddDisasterModal';
 import DisasterTable from '@/components/DisasterTable';
 import Toast from '@/components/Toast';
@@ -38,10 +38,10 @@ export default function EventsPage() {
   }, [load]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this disaster and all its leads?')) return;
+    if (!confirm('Delete this event and all its leads?')) return;
     await fetch(`/api/disasters/${id}`, { method: 'DELETE' });
     setDisasters(prev => prev.filter(d => d.id !== id));
-    setToast({ type: 'info', message: 'Incident deleted.' });
+    setToast({ type: 'info', message: 'Event deleted.' });
   };
 
   const handleSearchBusinesses = async (id: string) => {
@@ -50,7 +50,7 @@ export default function EventsPage() {
       const res  = await fetch(`/api/disasters/${id}/search-businesses`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        setToast({ type: 'success', message: `Found ${data.businessesSaved} businesses near this incident.` });
+        setToast({ type: 'success', message: `Found ${data.businessesSaved} businesses near this event.` });
         load();
       } else {
         setToast({ type: 'error', message: `Search failed: ${data.error}` });
@@ -76,76 +76,109 @@ export default function EventsPage() {
     }
   };
 
+  const chips = [
+    { label: 'Total',     val: disasters.length,                                        color: '#5A4636', bg: 'var(--bg-card)' },
+    { label: 'Active',    val: disasters.filter(d => d.status === 'active').length,     color: '#8A3618', bg: 'rgba(184, 77, 44, 0.12)' },
+    { label: 'Monitored', val: disasters.filter(d => d.status === 'monitoring').length, color: '#8A4E1C', bg: 'rgba(201, 123, 63, 0.14)' },
+    { label: 'Resolved',  val: disasters.filter(d => d.status === 'resolved').length,   color: '#506235', bg: 'rgba(122, 140, 92, 0.16)' },
+    { label: 'Manual',    val: disasters.filter(d => d.is_manual).length,               color: '#7A4A2E', bg: 'rgba(156, 107, 74, 0.14)' },
+  ];
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col">
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Event Management</h1>
-          <p className="text-sm text-textSecondary mt-0.5">Manage disaster incidents — add manually or auto-scrape from news</p>
+
+      {/* HERO */}
+      <section className="bg-grid-fade">
+        <div className="max-w-[1600px] mx-auto px-6 md:px-10 pt-14 md:pt-20 pb-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+            <div className="lg:col-span-7">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium uppercase tracking-[0.18em] mb-6"
+                style={{ background: 'var(--bg-card)', color: 'var(--accent-brown)', border: '1px solid var(--border)' }}>
+                <Sparkles className="w-3.5 h-3.5" />
+                Lead Pipeline
+              </div>
+              <h1 className="font-display font-semibold text-display-lg tracking-tighter">
+                Manage events.<br />
+                <span style={{ color: 'var(--accent-brown)' }}>Generate leads.</span>
+              </h1>
+              <p className="mt-5 text-lg text-textSecondary max-w-2xl leading-relaxed">
+                Add incidents by hand or let the auto-scraper ingest from the news. Each event becomes a search ring for nearby business leads.
+              </p>
+            </div>
+            <div className="lg:col-span-5 flex flex-wrap items-center gap-3 lg:justify-end">
+              <button
+                onClick={handleScrape}
+                disabled={isScraping}
+                className="btn-pill btn-secondary disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${isScraping ? 'animate-spin' : ''}`} />
+                {isScraping ? 'Scraping…' : 'Auto Scrape'}
+              </button>
+              <button
+                onClick={() => setShowModal(true)}
+                className="btn-pill btn-primary"
+              >
+                <Plus className="w-4 h-4" />
+                Add Event
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={handleScrape} disabled={isScraping}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-border transition-all ${
-              isScraping ? 'text-textSecondary cursor-not-allowed' : 'text-foreground hover:bg-background'
-            }`}>
-            <RefreshCw className={`w-4 h-4 ${isScraping ? 'animate-spin' : ''}`} />
-            {isScraping ? 'Scraping...' : 'Auto Scrape'}
-          </button>
-          <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-accentBlue text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-500 transition-colors shadow-lg shadow-accentBlue/20">
-            <Plus className="w-4 h-4" />
-            Add Incident
-          </button>
+      </section>
+
+      <div className="max-w-[1600px] mx-auto px-6 md:px-10 pb-16 flex flex-col gap-8">
+        {error && (
+          <div
+            className="flex items-center gap-3 px-5 py-4 rounded-2xl text-sm"
+            style={{ background: 'rgba(184, 77, 44, 0.08)', border: '1px solid rgba(184, 77, 44, 0.25)', color: '#8A3618' }}
+          >
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
+            <button onClick={load} className="ml-auto underline text-xs hover:no-underline">Retry</button>
+          </div>
+        )}
+
+        {/* Chips row */}
+        <div className="flex gap-2.5 flex-wrap">
+          {chips.map(c => (
+            <span
+              key={c.label}
+              className="text-xs font-semibold px-4 py-2 rounded-full inline-flex items-center gap-2"
+              style={{ background: c.bg, color: c.color, border: '1px solid var(--border)' }}
+            >
+              {c.label}
+              <span
+                className="px-2 py-0.5 rounded-full tabular-nums text-[11px]"
+                style={{ background: 'rgba(255,255,255,0.55)' }}
+              >
+                {c.val}
+              </span>
+            </span>
+          ))}
         </div>
+
+        {/* Table */}
+        {loading ? (
+          <div className="card-luxe p-16 text-center text-textSecondary text-sm">
+            Loading events…
+          </div>
+        ) : (
+          <DisasterTable
+            disasters={disasters}
+            onDelete={handleDelete}
+            onSearchBusinesses={handleSearchBusinesses}
+            searching={searching}
+          />
+        )}
+
+        {showModal && (
+          <AddDisasterModal
+            onClose={() => setShowModal(false)}
+            onCreated={() => { load(); }}
+          />
+        )}
       </div>
-
-      {/* Error banner */}
-      {error && (
-        <div className="flex items-center gap-3 bg-accentRed/10 border border-accentRed/30 text-accentRed px-4 py-3 rounded-xl text-sm">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-          <span>{error}</span>
-          <button onClick={load} className="ml-auto underline text-xs hover:no-underline">Retry</button>
-        </div>
-      )}
-
-      {/* Summary chips */}
-      <div className="flex gap-3 flex-wrap">
-        {[
-          { label: 'Total',     val: disasters.length,                                           color: 'bg-border text-foreground' },
-          { label: 'Active',    val: disasters.filter(d => d.status === 'active').length,        color: 'bg-accentRed/15 text-accentRed' },
-          { label: 'Monitored', val: disasters.filter(d => d.status === 'monitoring').length,    color: 'bg-accentOrange/15 text-accentOrange' },
-          { label: 'Resolved',  val: disasters.filter(d => d.status === 'resolved').length,      color: 'bg-accentGreen/15 text-accentGreen' },
-          { label: 'Manual',    val: disasters.filter(d => d.is_manual).length,                  color: 'bg-purple-500/15 text-purple-400' },
-        ].map(c => (
-          <span key={c.label} className={`text-xs font-semibold px-3 py-1.5 rounded-full ${c.color}`}>
-            {c.label}: {c.val}
-          </span>
-        ))}
-      </div>
-
-      {/* Table */}
-      {loading ? (
-        <div className="bg-card border border-border rounded-xl p-12 text-center text-textSecondary text-sm">
-          Loading incidents...
-        </div>
-      ) : (
-        <DisasterTable
-          disasters={disasters}
-          onDelete={handleDelete}
-          onSearchBusinesses={handleSearchBusinesses}
-          searching={searching}
-        />
-      )}
-
-      {/* Modal */}
-      {showModal && (
-        <AddDisasterModal
-          onClose={() => setShowModal(false)}
-          onCreated={() => { load(); }}
-        />
-      )}
     </div>
   );
 }

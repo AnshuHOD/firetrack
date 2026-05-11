@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Sparkles } from 'lucide-react';
 import BusinessLeadTable from '@/components/BusinessLeadTable';
 import Toast from '@/components/Toast';
 
@@ -80,55 +80,93 @@ export default function LeadsPage() {
   const converted = businesses.filter(b => b.lead_status === 'Converted').length;
   const highScore = businesses.filter(b => b.lead_score >= 70).length;
 
+  const pipeline = [
+    { label: 'Total leads', val: total,     accent: 'var(--accent-brown)',  tint: 'rgba(156, 107, 74, 0.12)' },
+    { label: 'New',         val: newLeads,  accent: '#9C6B4A',              tint: 'rgba(156, 107, 74, 0.12)' },
+    { label: 'Contacted',   val: contacted, accent: '#B89253',              tint: 'rgba(184, 146, 83, 0.16)' },
+    { label: 'Converted',   val: converted, accent: '#7A8C5C',              tint: 'rgba(122, 140, 92, 0.18)' },
+    { label: 'Score ≥ 70',  val: highScore, accent: '#B84D2C',              tint: 'rgba(184, 77, 44, 0.12)' },
+  ];
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col">
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
-        <p className="text-sm text-textSecondary mt-0.5">
-          All businesses identified near disaster zones — ranked by lead score
-        </p>
-      </div>
 
-      {/* Error banner */}
-      {error && (
-        <div className="flex items-center gap-3 bg-accentRed/10 border border-accentRed/30 text-accentRed px-4 py-3 rounded-xl text-sm">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-          <span>{error}</span>
-          <button onClick={load} className="ml-auto underline text-xs hover:no-underline">Retry</button>
-        </div>
-      )}
-
-      {/* Summary row */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {[
-          { label: 'Total Leads', val: total,     color: 'bg-card border border-border text-foreground' },
-          { label: 'New',         val: newLeads,  color: 'bg-accentBlue/10 border border-accentBlue/20 text-accentBlue' },
-          { label: 'Contacted',   val: contacted, color: 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400' },
-          { label: 'Converted',   val: converted, color: 'bg-accentGreen/10 border border-accentGreen/20 text-accentGreen' },
-          { label: 'Score ≥ 70',  val: highScore, color: 'bg-accentRed/10 border border-accentRed/20 text-accentRed' },
-        ].map(c => (
-          <div key={c.label} className={`rounded-xl px-4 py-3 ${c.color}`}>
-            <p className="text-xs opacity-70">{c.label}</p>
-            <p className="text-2xl font-bold mt-0.5">{loading ? '…' : c.val}</p>
+      {/* HERO */}
+      <section className="bg-grid-fade">
+        <div className="max-w-[1600px] mx-auto px-6 md:px-10 pt-14 md:pt-20 pb-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+            <div className="lg:col-span-7">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium uppercase tracking-[0.18em] mb-6"
+                style={{ background: 'var(--bg-card)', color: 'var(--accent-brown)', border: '1px solid var(--border)' }}>
+                <Sparkles className="w-3.5 h-3.5" />
+                Lead Cards
+              </div>
+              <h1 className="font-display font-semibold text-display-lg tracking-tighter">
+                Every lead.<br />
+                <span style={{ color: 'var(--accent-brown)' }}>Ranked by impact.</span>
+              </h1>
+              <p className="mt-5 text-lg text-textSecondary max-w-2xl leading-relaxed">
+                Businesses identified inside affected zones — sorted by lead score, contact readiness, and proximity to the incident.
+              </p>
+            </div>
+            <div className="lg:col-span-5 text-sm text-textSecondary">
+              <p>One workspace. Every workflow — score, segment, contact, convert.</p>
+            </div>
           </div>
-        ))}
-      </div>
-
-      {/* Table */}
-      {loading ? (
-        <div className="bg-card border border-border rounded-xl p-12 text-center text-textSecondary text-sm">
-          Loading leads...
         </div>
-      ) : (
-        <BusinessLeadTable
-          businesses={businesses}
-          onStatusChange={handleStatusChange}
-          onNoteSave={handleNoteSave}
-          onExport={handleExport}
-          onDelete={handleDelete}
-        />
-      )}
+      </section>
+
+      <div className="max-w-[1600px] mx-auto px-6 md:px-10 pb-16 flex flex-col gap-8">
+        {/* Error */}
+        {error && (
+          <div
+            className="flex items-center gap-3 px-5 py-4 rounded-2xl text-sm"
+            style={{ background: 'rgba(184, 77, 44, 0.08)', border: '1px solid rgba(184, 77, 44, 0.25)', color: '#8A3618' }}
+          >
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
+            <button onClick={load} className="ml-auto underline text-xs hover:no-underline">Retry</button>
+          </div>
+        )}
+
+        {/* Pipeline snapshot — floating widgets */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {pipeline.map(c => (
+            <div
+              key={c.label}
+              className="card-luxe p-5 hover-lift relative overflow-hidden"
+            >
+              <div
+                className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none"
+                style={{ background: c.tint, filter: 'blur(8px)' }}
+              />
+              <p className="text-[10px] uppercase tracking-[0.18em] text-textSecondary font-medium relative">{c.label}</p>
+              <p
+                className="font-display text-4xl font-semibold mt-2 tabular-nums relative"
+                style={{ color: c.accent }}
+              >
+                {loading ? '—' : c.val}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Table */}
+        {loading ? (
+          <div className="card-luxe p-16 text-center text-textSecondary text-sm">
+            Loading leads…
+          </div>
+        ) : (
+          <BusinessLeadTable
+            businesses={businesses}
+            onStatusChange={handleStatusChange}
+            onNoteSave={handleNoteSave}
+            onExport={handleExport}
+            onDelete={handleDelete}
+          />
+        )}
+      </div>
     </div>
   );
 }

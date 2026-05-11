@@ -2,20 +2,138 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Boldonse&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @layer base {
   :root {
-    --bg-primary: #0f0f0f;
-    --bg-card: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0a0;
-    --accent-red: #ef4444;       /* Fire/High impact */
-    --accent-orange: #f97316;    /* Medium impact */
-    --accent-green: #22c55e;     /* Low impact */
-    --accent-blue: #3b82f6;      /* Map pins, buttons */
+    /* Primary palette — Avani luxury */
+    --bg-primary:        #F5EFE6;   /* page background */
+    --bg-secondary:      #EFE4D1;   /* alternating sections */
+    --bg-card:           #F8F3EC;   /* cards */
+    --bg-hover:          #EADCCB;   /* hover surface */
+
+    --text-primary:      #2E1B12;   /* deep espresso */
+    --text-secondary:    #6B5544;   /* muted brown */
+    --text-muted:        #9A7F66;
+
+    --border:            #D8C7B5;   /* soft warm border */
+    --border-strong:     #BFA88E;
+
+    /* Brand / action */
+    --navbar:            #3B2416;   /* dark espresso navbar */
+    --btn-bg:            #4A2D1D;
+    --btn-hover:         #6A442E;
+    --accent-brown:      #9C6B4A;
+
+    /* Semantic accents (earth-toned) */
+    --accent-red:        #B84D2C;   /* terracotta — fire / critical */
+    --accent-orange:     #C97B3F;   /* warm rust — high / medium */
+    --accent-yellow:     #B89253;   /* mustard */
+    --accent-green:      #7A8C5C;   /* olive — success / low */
+    --accent-blue:       #9C6B4A;   /* mapped to brown — primary CTA */
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html, body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Chunky bold display family for hero / display headings */
+  .font-display {
+    font-family: 'Boldonse', 'Bricolage Grotesque', 'Archivo Black', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.03em;
   }
 }
+
+@layer utilities {
+  /* Warm grid background — subtle editorial texture */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(155, 107, 74, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(155, 107, 74, 0.07) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  .bg-grid-fade {
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(245, 239, 230, 0) 0%, var(--bg-primary) 75%),
+      linear-gradient(to right, rgba(155, 107, 74, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(155, 107, 74, 0.08) 1px, transparent 1px);
+    background-size: 100% 100%, 56px 56px, 56px 56px;
+  }
+  .bg-dots {
+    background-image: radial-gradient(rgba(155, 107, 74, 0.18) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .shadow-soft {
+    box-shadow: 0 1px 2px rgba(46, 27, 18, 0.04), 0 8px 24px -8px rgba(46, 27, 18, 0.08);
+  }
+  .shadow-soft-lg {
+    box-shadow: 0 2px 4px rgba(46, 27, 18, 0.05), 0 24px 48px -16px rgba(46, 27, 18, 0.12);
+  }
+
+  /* Pill button base */
+  .btn-pill {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all;
+  }
+  .btn-primary {
+    background: var(--btn-bg);
+    color: #F8F3EC;
+  }
+  .btn-primary:hover { background: var(--btn-hover); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-secondary:hover { background: var(--bg-hover); }
+
+  /* Premium card */
+  .card-luxe {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 1.5rem;
+  }
+
+  /* Input styling */
+  .input-luxe {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    padding: 0.625rem 1rem;
+    color: var(--text-primary);
+    transition: border-color 150ms, background 150ms;
+  }
+  .input-luxe:focus { outline: none; border-color: var(--accent-brown); background: var(--bg-card); }
+
+  .text-display-xl { font-size: clamp(2.75rem, 6vw, 5.25rem); line-height: 0.95; }
+  .text-display-lg { font-size: clamp(2.25rem, 4.5vw, 3.5rem); line-height: 1; }
+  .text-display-md { font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.05; }
+
+  /* Subtle hover lift */
+  .hover-lift { transition: transform 200ms ease, box-shadow 200ms ease; }
+  .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 16px 32px -16px rgba(46, 27, 18, 0.18); }
+
+  /* Scrollbar */
+  .scroll-warm::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scroll-warm::-webkit-scrollbar-track { background: transparent; }
+  .scroll-warm::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
+  .scroll-warm::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+}
+
+/* Leaflet popup re-skinned for warm theme */
+.leaflet-popup-content-wrapper {
+  background: #F8F3EC !important;
+  color: #2E1B12 !important;
+  border: 1px solid #D8C7B5 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 40px -12px rgba(46, 27, 18, 0.22) !important;
+}
+.leaflet-popup-tip { background: #F8F3EC !important; }
+.leaflet-container { font-family: 'Inter', sans-serif !important; }
+.map-tiles-warm { filter: sepia(0.18) saturate(0.85) brightness(0.97) contrast(1.02); }
+
+@keyframes ping-soft { 75%, 100% { transform: scale(2); opacity: 0; } }

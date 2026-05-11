@@ -2,41 +2,46 @@ export const LEAD_STATUSES = ['New', 'Contacted', 'Interested', 'Converted', 'Cl
 export type LeadStatus = typeof LEAD_STATUSES[number];
 
 const STATUS_MAP: Record<LeadStatus, { bg: string; text: string; dot: string }> = {
-  New:        { bg: 'bg-blue-500/15',   text: 'text-blue-400',   dot: 'bg-blue-400' },
-  Contacted:  { bg: 'bg-yellow-500/15', text: 'text-yellow-400', dot: 'bg-yellow-400' },
-  Interested: { bg: 'bg-purple-500/15', text: 'text-purple-400', dot: 'bg-purple-400' },
-  Converted:  { bg: 'bg-green-500/15',  text: 'text-green-400',  dot: 'bg-green-400' },
-  Closed:     { bg: 'bg-gray-500/15',   text: 'text-gray-400',   dot: 'bg-gray-400' },
+  New:        { bg: 'rgba(156, 107, 74, 0.12)', text: '#7A4A2E', dot: '#9C6B4A' },
+  Contacted:  { bg: 'rgba(184, 146, 83, 0.16)', text: '#8B6A2E', dot: '#B89253' },
+  Interested: { bg: 'rgba(201, 123, 63, 0.16)', text: '#8A4E1C', dot: '#C97B3F' },
+  Converted:  { bg: 'rgba(122, 140, 92, 0.18)', text: '#506235', dot: '#7A8C5C' },
+  Closed:     { bg: 'rgba(107, 85, 68, 0.14)',  text: '#5A4636', dot: '#9A7F66' },
 };
 
 export default function LeadStatusBadge({ status }: { status: string }) {
   const cfg = STATUS_MAP[status as LeadStatus] || STATUS_MAP.New;
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${cfg.bg} ${cfg.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+    <span
+      className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full font-medium"
+      style={{ background: cfg.bg, color: cfg.text }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.dot }} />
       {status}
     </span>
   );
 }
 
 export function ScoreBadge({ score }: { score: number }) {
-  let color = 'text-gray-400';
-  if (score >= 80) color = 'text-red-400';
-  else if (score >= 60) color = 'text-orange-400';
-  else if (score >= 40) color = 'text-yellow-400';
-  else if (score >= 20) color = 'text-green-400';
+  let color = '#9A7F66';
+  if (score >= 80) color = '#B84D2C';
+  else if (score >= 60) color = '#C97B3F';
+  else if (score >= 40) color = '#B89253';
+  else if (score >= 20) color = '#7A8C5C';
+
+  const trackBg = 'rgba(216, 199, 181, 0.6)';
 
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="w-16 h-1.5 bg-border rounded-full overflow-hidden">
+    <div className="flex items-center gap-2">
+      <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: trackBg }}>
         <div
-          className={`h-full rounded-full transition-all ${
-            score >= 80 ? 'bg-red-400' : score >= 60 ? 'bg-orange-400' : score >= 40 ? 'bg-yellow-400' : 'bg-green-400'
-          }`}
-          style={{ width: `${score}%` }}
+          className="h-full rounded-full transition-all"
+          style={{ width: `${Math.min(score, 100)}%`, background: color }}
         />
       </div>
-      <span className={`text-xs font-bold tabular-nums ${color}`}>{score}</span>
+      <span className="text-xs font-semibold tabular-nums" style={{ color }}>
+        {score}
+      </span>
     </div>
   );
 }

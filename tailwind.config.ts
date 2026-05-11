@@ -9,15 +9,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--bg-primary)",
-        foreground: "var(--text-primary)",
-        card: "var(--bg-card)",
-        border: "var(--border)",
+        // Core surfaces
+        background:    "var(--bg-primary)",
+        bgSecondary:   "var(--bg-secondary)",
+        foreground:    "var(--text-primary)",
+        card:          "var(--bg-card)",
+        hoverBg:       "var(--bg-hover)",
+        border:        "var(--border)",
+        borderStrong:  "var(--border-strong)",
         textSecondary: "var(--text-secondary)",
-        accentRed: "var(--accent-red)",
-        accentOrange: "var(--accent-orange)",
-        accentGreen: "var(--accent-green)",
-        accentBlue: "var(--accent-blue)",
+        textMuted:     "var(--text-muted)",
+
+        // Brand
+        navbar:        "var(--navbar)",
+        btnBg:         "var(--btn-bg)",
+        btnHover:      "var(--btn-hover)",
+        accentBrown:   "var(--accent-brown)",
+
+        // Semantic accents (re-tuned to earth tones)
+        accentRed:     "var(--accent-red)",
+        accentOrange:  "var(--accent-orange)",
+        accentYellow:  "var(--accent-yellow)",
+        accentGreen:   "var(--accent-green)",
+        accentBlue:    "var(--accent-blue)",
+      },
+      fontFamily: {
+        sans:    ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Boldonse', 'Bricolage Grotesque', 'Archivo Black', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        '4xl': '2rem',
+        '5xl': '2.5rem',
       },
     },
   },
