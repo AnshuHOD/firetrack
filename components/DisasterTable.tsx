@@ -34,7 +34,7 @@ const STATUS_STYLE: Record<string, { dot: string; text: string }> = {
 };
 
 const SELECT_CLASS =
-  'bg-background border border-border rounded-full px-4 py-2 text-sm text-foreground focus:outline-none focus:border-accentBrown transition-colors';
+  'bg-background border border-border rounded-full px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-accentBrown transition-colors min-h-[44px]';
 
 export default function DisasterTable({ disasters, onDelete, onSearchBusinesses, searching }: Props) {
   const [search, setSearch] = useState('');
@@ -52,32 +52,110 @@ export default function DisasterTable({ disasters, onDelete, onSearchBusinesses,
   return (
     <div className="card-luxe overflow-hidden">
       <div
-        className="p-5 flex flex-wrap gap-3 items-center"
+        className="p-3 sm:p-5 flex flex-col sm:flex-row sm:flex-wrap gap-2.5 sm:gap-3 sm:items-center"
         style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}
       >
-        <div className="relative flex-1 min-w-[220px]">
+        <div className="relative flex-1 min-w-0 sm:min-w-[220px]">
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-textSecondary" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search incidents…"
-            className="w-full bg-background border border-border rounded-full pl-11 pr-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-accentBrown transition-colors"
+            className="w-full bg-background border border-border rounded-full pl-11 pr-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-accentBrown transition-colors min-h-[44px]"
           />
         </div>
-        <select value={filterType} onChange={e => setFilterType(e.target.value)} className={SELECT_CLASS}>
-          <option value="all">All types</option>
-          {['fire','earthquake','flood','explosion','storm','collapse','chemical','tsunami','landslide','other'].map(t => (
-            <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-          ))}
-        </select>
-        <select value={filterSeverity} onChange={e => setFilterSeverity(e.target.value)} className={SELECT_CLASS}>
-          <option value="all">All severities</option>
-          {['Critical','High','Medium','Low'].map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <span className="text-xs text-textSecondary ml-auto">{filtered.length} events</span>
+        <div className="flex gap-2 sm:gap-3 flex-wrap">
+          <select value={filterType} onChange={e => setFilterType(e.target.value)} className={`${SELECT_CLASS} flex-1 sm:flex-initial`}>
+            <option value="all">All types</option>
+            {['fire','earthquake','flood','explosion','storm','collapse','chemical','tsunami','landslide','other'].map(t => (
+              <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+            ))}
+          </select>
+          <select value={filterSeverity} onChange={e => setFilterSeverity(e.target.value)} className={`${SELECT_CLASS} flex-1 sm:flex-initial`}>
+            <option value="all">All severities</option>
+            {['Critical','High','Medium','Low'].map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <span className="text-xs text-textSecondary sm:ml-auto">{filtered.length} events</span>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* MOBILE — card list */}
+      <div className="md:hidden divide-y" style={{ borderColor: 'var(--border)' }}>
+        {filtered.length === 0 ? (
+          <div className="px-5 py-16 text-center text-textSecondary text-sm">No events found</div>
+        ) : filtered.map(d => {
+          const sc = STATUS_STYLE[d.status];
+          return (
+            <article key={d.id} className="p-4 sm:p-5">
+              <h3 className="font-semibold text-foreground leading-snug break-words">{d.title}</h3>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <DisasterBadge type={d.disaster_type} size="sm" />
+                <SeverityBadge severity={d.severity} />
+                {d.is_manual && (
+                  <span
+                    className="text-[10px] px-2 py-0.5 rounded-full inline-block uppercase tracking-wider font-medium"
+                    style={{ background: 'rgba(156, 107, 74, 0.14)', color: '#7A4A2E' }}
+                  >Manual</span>
+                )}
+              </div>
+              <p className="text-xs text-textSecondary mt-2 break-words">
+                {[d.city, d.state].filter(Boolean).join(', ') || '—'}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                <span className="inline-flex items-center gap-1.5 font-medium capitalize" style={{ color: sc?.text || 'var(--text-secondary)' }}>
+                  {sc && <span className="w-1.5 h-1.5 rounded-full" style={{ background: sc.dot }} />}
+                  {d.status}
+                </span>
+                <span className="inline-flex items-center gap-1 text-textSecondary">
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span className="tabular-nums font-medium">{d.leads_count ?? 0}</span>
+                </span>
+                {d.published_at && (
+                  <span className="text-textSecondary">
+                    {new Date(d.published_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                {!d.businesses_searched && (
+                  <button
+                    onClick={() => onSearchBusinesses(d.id)}
+                    disabled={searching === d.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium disabled:opacity-40 transition-colors min-h-[40px]"
+                    style={{ background: 'rgba(156, 107, 74, 0.14)', color: '#7A4A2E' }}
+                  >
+                    {searching === d.id
+                      ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      : <Building2 className="w-3.5 h-3.5" />}
+                    Find businesses
+                  </button>
+                )}
+                {d.source_url && d.source_url !== '#' && (
+                  <a href={d.source_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs text-textSecondary transition-colors min-h-[40px]"
+                    style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)' }}
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Source
+                  </a>
+                )}
+                <button
+                  onClick={() => onDelete(d.id)}
+                  className="ml-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-colors min-h-[40px]"
+                  style={{ background: 'rgba(184, 77, 44, 0.10)', color: '#8A3618' }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {/* DESKTOP — table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-textSecondary text-[11px] uppercase tracking-[0.14em]" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -109,12 +187,8 @@ export default function DisasterTable({ disasters, onDelete, onSearchBusinesses,
                   <td className="px-5 py-4 max-w-[300px]">
                     <p className="font-semibold text-foreground line-clamp-2 leading-snug">{d.title}</p>
                     {d.is_manual && (
-                      <span
-                        className="text-[10px] px-2 py-0.5 rounded-full mt-1.5 inline-block uppercase tracking-wider font-medium"
-                        style={{ background: 'rgba(156, 107, 74, 0.14)', color: '#7A4A2E' }}
-                      >
-                        Manual
-                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full mt-1.5 inline-block uppercase tracking-wider font-medium"
+                        style={{ background: 'rgba(156, 107, 74, 0.14)', color: '#7A4A2E' }}>Manual</span>
                     )}
                   </td>
                   <td className="px-5 py-4"><DisasterBadge type={d.disaster_type} size="sm" /></td>
@@ -157,16 +231,14 @@ export default function DisasterTable({ disasters, onDelete, onSearchBusinesses,
                       {d.source_url && d.source_url !== '#' && (
                         <a href={d.source_url} target="_blank" rel="noopener noreferrer"
                           className="p-2 rounded-full transition-colors text-textSecondary hover:text-foreground"
-                          style={{ background: 'var(--bg-primary)' }}
-                        >
+                          style={{ background: 'var(--bg-primary)' }}>
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
                       )}
                       <button
                         onClick={() => onDelete(d.id)}
                         className="p-2 rounded-full transition-colors"
-                        style={{ background: 'rgba(184, 77, 44, 0.10)', color: '#8A3618' }}
-                      >
+                        style={{ background: 'rgba(184, 77, 44, 0.10)', color: '#8A3618' }}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>

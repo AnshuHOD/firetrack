@@ -5,6 +5,8 @@ import { AlertTriangle, Sparkles } from 'lucide-react';
 import BusinessLeadTable from '@/components/BusinessLeadTable';
 import Toast from '@/components/Toast';
 
+const CONTAINER = 'max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10';
+
 export default function LeadsPage() {
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -89,15 +91,15 @@ export default function LeadsPage() {
   ];
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full">
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
 
       {/* HERO */}
       <section className="bg-grid-fade">
-        <div className="max-w-[1600px] mx-auto px-6 md:px-10 pt-14 md:pt-20 pb-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+        <div className={`${CONTAINER} pt-10 sm:pt-14 lg:pt-20 pb-8 sm:pb-10`}>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-end">
             <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium uppercase tracking-[0.18em] mb-6"
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] mb-5 sm:mb-6"
                 style={{ background: 'var(--bg-card)', color: 'var(--accent-brown)', border: '1px solid var(--border)' }}>
                 <Sparkles className="w-3.5 h-3.5" />
                 Lead Cards
@@ -106,7 +108,7 @@ export default function LeadsPage() {
                 Every lead.<br />
                 <span style={{ color: 'var(--accent-brown)' }}>Ranked by impact.</span>
               </h1>
-              <p className="mt-5 text-lg text-textSecondary max-w-2xl leading-relaxed">
+              <p className="mt-4 sm:mt-5 text-base sm:text-lg text-textSecondary max-w-2xl leading-relaxed">
                 Businesses identified inside affected zones — sorted by lead score, contact readiness, and proximity to the incident.
               </p>
             </div>
@@ -117,34 +119,30 @@ export default function LeadsPage() {
         </div>
       </section>
 
-      <div className="max-w-[1600px] mx-auto px-6 md:px-10 pb-16 flex flex-col gap-8">
-        {/* Error */}
+      <div className={`${CONTAINER} pb-12 sm:pb-16 flex flex-col gap-6 sm:gap-8`}>
         {error && (
           <div
-            className="flex items-center gap-3 px-5 py-4 rounded-2xl text-sm"
+            className="flex items-start sm:items-center gap-3 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl text-sm"
             style={{ background: 'rgba(184, 77, 44, 0.08)', border: '1px solid rgba(184, 77, 44, 0.25)', color: '#8A3618' }}
           >
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            <span>{error}</span>
-            <button onClick={load} className="ml-auto underline text-xs hover:no-underline">Retry</button>
+            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 sm:mt-0" />
+            <span className="flex-1 min-w-0 break-words">{error}</span>
+            <button onClick={load} className="underline text-xs hover:no-underline flex-shrink-0">Retry</button>
           </div>
         )}
 
-        {/* Pipeline snapshot — floating widgets */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {/* Pipeline snapshot — 2 cols mobile, 3 cols sm, 5 cols xl */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
           {pipeline.map(c => (
-            <div
-              key={c.label}
-              className="card-luxe p-5 hover-lift relative overflow-hidden"
-            >
+            <div key={c.label} className="card-luxe p-4 sm:p-5 hover-lift relative overflow-hidden">
               <div
                 className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none"
                 style={{ background: c.tint, filter: 'blur(8px)' }}
               />
-              <p className="text-[10px] uppercase tracking-[0.18em] text-textSecondary font-medium relative">{c.label}</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] sm:tracking-[0.18em] text-textSecondary font-medium relative">{c.label}</p>
               <p
-                className="font-display text-4xl font-semibold mt-2 tabular-nums relative"
-                style={{ color: c.accent }}
+                className="font-display font-semibold mt-2 tabular-nums relative"
+                style={{ color: c.accent, fontSize: 'clamp(1.75rem, 5vw, 2.5rem)' }}
               >
                 {loading ? '—' : c.val}
               </p>
@@ -152,9 +150,8 @@ export default function LeadsPage() {
           ))}
         </div>
 
-        {/* Table */}
         {loading ? (
-          <div className="card-luxe p-16 text-center text-textSecondary text-sm">
+          <div className="card-luxe p-10 sm:p-16 text-center text-textSecondary text-sm">
             Loading leads…
           </div>
         ) : (

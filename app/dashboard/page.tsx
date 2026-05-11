@@ -29,6 +29,9 @@ interface Stats {
   recent_disasters: any[];
 }
 
+// Shared container padding scale — mobile-first
+const CONTAINER = 'max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10';
+
 export default function DashboardPage() {
   const [stats, setStats]           = useState<Stats | null>(null);
   const [disasters, setDisasters]   = useState<any[]>([]);
@@ -92,15 +95,15 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full">
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
 
-      {/* HERO — editorial, large display headline */}
+      {/* HERO — mobile stacks; lg becomes 7/5 split. Padding scales by breakpoint */}
       <section className="relative bg-grid-fade">
-        <div className="max-w-[1600px] mx-auto px-6 md:px-10 pt-16 md:pt-24 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-end">
+        <div className={`${CONTAINER} pt-10 sm:pt-16 lg:pt-24 pb-8 sm:pb-12`}>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-end">
             <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium uppercase tracking-[0.18em] mb-6"
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] mb-5 sm:mb-6"
                 style={{ background: 'var(--bg-card)', color: 'var(--accent-brown)', border: '1px solid var(--border)' }}>
                 <Sparkles className="w-3.5 h-3.5" />
                 Lead Studio · Today
@@ -110,10 +113,10 @@ export default function DashboardPage() {
                 <span style={{ color: 'var(--accent-brown)' }}>Lead pipeline.</span><br />
                 In one place.
               </h1>
-              <p className="mt-6 text-lg md:text-xl text-textSecondary max-w-2xl leading-relaxed">
+              <p className="mt-5 sm:mt-6 text-base sm:text-lg lg:text-xl text-textSecondary max-w-2xl leading-relaxed">
                 Live disaster monitoring, nearby-business discovery, AI-scored leads, geo intelligence and exports — one beautifully crafted portal built for ambitious Indian businesses.
               </p>
-              <div className="mt-8 flex flex-wrap items-center gap-3">
+              <div className="mt-7 sm:mt-8 flex flex-wrap items-center gap-2.5 sm:gap-3">
                 <button
                   onClick={handleScrape}
                   disabled={isScraping}
@@ -130,44 +133,41 @@ export default function DashboardPage() {
                   <Trash2 className="w-3.5 h-3.5" />
                   Purge All
                 </button>
-                <button
-                  onClick={loadData}
-                  className="btn-pill btn-secondary"
-                >
+                <button onClick={loadData} className="btn-pill btn-secondary">
                   Refresh
                 </button>
               </div>
             </div>
 
-            {/* Right side: floating KPI summary card */}
+            {/* Floating KPI card */}
             <div className="lg:col-span-5">
-              <div className="card-luxe p-7 shadow-soft-lg hover-lift relative overflow-hidden">
+              <div className="card-luxe p-5 sm:p-7 shadow-soft-lg hover-lift relative overflow-hidden">
                 <div
                   className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
                   style={{ background: 'rgba(156, 107, 74, 0.10)', filter: 'blur(12px)' }}
                 />
                 <div className="relative">
-                  <p className="text-xs uppercase tracking-[0.22em] text-textSecondary">Live coverage</p>
-                  <div className="mt-3 flex items-baseline gap-3">
-                    <span className="font-display text-6xl font-semibold tracking-tighter tabular-nums">
+                  <p className="text-[11px] sm:text-xs uppercase tracking-[0.22em] text-textSecondary">Live coverage</p>
+                  <div className="mt-3 flex items-baseline gap-3 flex-wrap">
+                    <span className="font-display font-semibold tracking-tighter tabular-nums" style={{ fontSize: 'clamp(2.5rem, 10vw, 4rem)', lineHeight: 1 }}>
                       {loading ? '—' : stats?.total_businesses ?? 0}
                     </span>
                     <span className="text-textSecondary text-sm">leads tracked</span>
                   </div>
-                  <div className="mt-6 grid grid-cols-3 gap-4 pt-5" style={{ borderTop: '1px solid var(--border)' }}>
+                  <div className="mt-5 sm:mt-6 grid grid-cols-3 gap-3 sm:gap-4 pt-4 sm:pt-5" style={{ borderTop: '1px solid var(--border)' }}>
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-textSecondary">Events</p>
-                      <p className="font-display text-2xl font-semibold mt-1 tabular-nums">{loading ? '—' : stats?.total_disasters ?? 0}</p>
+                      <p className="text-[10px] uppercase tracking-[0.16em] sm:tracking-[0.18em] text-textSecondary">Events</p>
+                      <p className="font-display text-xl sm:text-2xl font-semibold mt-1 tabular-nums">{loading ? '—' : stats?.total_disasters ?? 0}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-textSecondary">Active</p>
-                      <p className="font-display text-2xl font-semibold mt-1 tabular-nums" style={{ color: 'var(--accent-red)' }}>
+                      <p className="text-[10px] uppercase tracking-[0.16em] sm:tracking-[0.18em] text-textSecondary">Active</p>
+                      <p className="font-display text-xl sm:text-2xl font-semibold mt-1 tabular-nums" style={{ color: 'var(--accent-red)' }}>
                         {loading ? '—' : stats?.active_disasters ?? 0}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-textSecondary">Critical</p>
-                      <p className="font-display text-2xl font-semibold mt-1 tabular-nums" style={{ color: 'var(--accent-orange)' }}>
+                      <p className="text-[10px] uppercase tracking-[0.16em] sm:tracking-[0.18em] text-textSecondary">Critical</p>
+                      <p className="font-display text-xl sm:text-2xl font-semibold mt-1 tabular-nums" style={{ color: 'var(--accent-orange)' }}>
                         {loading ? '—' : stats?.high_severity ?? 0}
                       </p>
                     </div>
@@ -179,32 +179,32 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Error banner */}
+      {/* Error */}
       {error && (
-        <section className="max-w-[1600px] mx-auto px-6 md:px-10 mt-4">
+        <section className={`${CONTAINER} mt-4`}>
           <div
-            className="flex items-center gap-3 px-5 py-4 rounded-2xl text-sm"
+            className="flex items-start sm:items-center gap-3 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl text-sm"
             style={{ background: 'rgba(184, 77, 44, 0.08)', border: '1px solid rgba(184, 77, 44, 0.25)', color: '#8A3618' }}
           >
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            <span>{error}</span>
-            <button onClick={loadData} className="ml-auto underline text-xs hover:no-underline">Retry</button>
+            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 sm:mt-0" />
+            <span className="flex-1 min-w-0 break-words">{error}</span>
+            <button onClick={loadData} className="underline text-xs hover:no-underline flex-shrink-0">Retry</button>
           </div>
         </section>
       )}
 
-      {/* STATS — editorial KPI row */}
-      <section className="max-w-[1600px] mx-auto px-6 md:px-10 mt-10 md:mt-16">
-        <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
+      {/* STATS — 1 col → 2 col → 4 col */}
+      <section className={`${CONTAINER} mt-10 sm:mt-14 lg:mt-16`}>
+        <div className="flex items-end justify-between mb-6 sm:mb-8 flex-wrap gap-3 sm:gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-textSecondary">Section 01</p>
+            <p className="text-[11px] sm:text-xs uppercase tracking-[0.22em] text-textSecondary">Section 01</p>
             <h2 className="font-display text-display-md font-semibold mt-1 tracking-tight">At a glance</h2>
           </div>
           <p className="text-sm text-textSecondary max-w-md">
             A live read of every event, lead, and high-priority signal across your pipeline.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
           <StatsCard label="Total events"     value={stats?.total_disasters  ?? 0} icon="⚡" color="blue"   loading={loading} hint="All time" />
           <StatsCard label="Total leads"      value={stats?.total_businesses ?? 0} icon="🏢" color="orange" loading={loading} hint="Across pipeline" />
           <StatsCard label="Active incidents" value={stats?.active_disasters ?? 0} icon="📡" color="red"    loading={loading} pulse hint="Live now" />
@@ -212,53 +212,55 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* MAP + ANALYTICS — left/right composition */}
+      {/* MAP + ANALYTICS — fully stacks on mobile, three-column from lg+ */}
       <section
-        className="mt-16 py-16"
+        className="mt-12 sm:mt-16 py-10 sm:py-16"
         style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}
       >
-        <div className="max-w-[1600px] mx-auto px-6 md:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className={CONTAINER}>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
             <div className="lg:col-span-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-textSecondary">Section 02</p>
+              <p className="text-[11px] sm:text-xs uppercase tracking-[0.22em] text-textSecondary">Section 02</p>
               <h2 className="font-display text-display-md font-semibold mt-1 tracking-tight">
-                Geo&shy;intelligence,<br />in one view.
+                Geo&shy;intelligence,<br className="hidden sm:inline" />in one view.
               </h2>
-              <p className="mt-5 text-textSecondary leading-relaxed">
+              <p className="mt-4 sm:mt-5 text-textSecondary leading-relaxed">
                 Every incident geo-tagged. Every nearby business scored. The map and analytics work as one layer — built for fast decisions.
               </p>
-              <div className="mt-7 flex items-center gap-2 text-sm">
+              <div className="mt-5 sm:mt-7 flex items-center gap-2 text-sm">
                 <MapPin className="w-4 h-4" style={{ color: 'var(--accent-brown)' }} />
                 <span className="text-textSecondary">{businesses.length} mapped leads</span>
               </div>
             </div>
 
-            <div className="lg:col-span-5 h-[460px]">
+            {/* Map — full width on mobile/tablet, ~5/12 on desktop. min-height keeps Leaflet happy. */}
+            <div className="lg:col-span-5 h-[360px] sm:h-[420px] lg:h-[460px]">
               <MapView disasters={disasters} businesses={businesses} />
             </div>
 
-            <div className="lg:col-span-3 h-[460px]">
+            <div className="lg:col-span-3 h-[420px] lg:h-[460px]">
               <AnalyticsPanel stats={stats} businesses={businesses} loading={loading} />
             </div>
           </div>
         </div>
       </section>
 
-      {/* RECENT INCIDENTS — editorial list */}
-      <section className="max-w-[1600px] mx-auto px-6 md:px-10 mt-16 mb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* RECENT ACTIVITY — stacks on mobile, side-by-side from lg */}
+      <section className={`${CONTAINER} mt-12 sm:mt-16 mb-12 sm:mb-16`}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           <div className="lg:col-span-4">
-            <p className="text-xs uppercase tracking-[0.22em] text-textSecondary">Section 03</p>
+            <p className="text-[11px] sm:text-xs uppercase tracking-[0.22em] text-textSecondary">Section 03</p>
             <h2 className="font-display text-display-md font-semibold mt-1 tracking-tight">Recent activity</h2>
-            <p className="mt-5 text-textSecondary leading-relaxed">
-              Newest events ingested by the scraper, ready for triage. Click an incident to open it in the pipeline.
+            <p className="mt-4 sm:mt-5 text-textSecondary leading-relaxed">
+              Newest events ingested by the scraper, ready for triage. Tap an incident to open it in the pipeline.
             </p>
           </div>
 
           <div className="lg:col-span-8 card-luxe overflow-hidden">
-            <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
-              <p className="font-display text-lg font-semibold tracking-tight">Latest events</p>
-              <span className="text-xs text-textSecondary">{(stats?.recent_disasters || []).length} shown</span>
+            <div className="px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between gap-3"
+              style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+              <p className="font-display text-base sm:text-lg font-semibold tracking-tight">Latest events</p>
+              <span className="text-xs text-textSecondary flex-shrink-0">{(stats?.recent_disasters || []).length} shown</span>
             </div>
             <div>
               {loading ? (
@@ -270,22 +272,41 @@ export default function DashboardPage() {
               ) : (stats?.recent_disasters || []).map((d: any) => (
                 <div
                   key={d.id}
-                  className="px-6 py-4 flex items-center justify-between transition-colors group"
+                  className="px-4 sm:px-6 py-3.5 sm:py-4 flex items-start sm:items-center gap-3 sm:gap-4 group transition-colors"
                   style={{ borderBottom: '1px solid rgba(216, 199, 181, 0.5)' }}
                   onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)')}
                   onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
                 >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <span className="text-2xl flex-shrink-0">
-                      {({'fire':'🔥','earthquake':'🌍','flood':'🌊','explosion':'💥','storm':'🌪️','collapse':'🏚️','chemical':'☣️','other':'⚠️'} as Record<string,string>)[d.disaster_type] ?? '⚠️'}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold line-clamp-1">{d.title}</p>
-                      <p className="text-xs text-textSecondary mt-0.5">{[d.city, d.state].filter(Boolean).join(', ')}</p>
+                  <span className="text-xl sm:text-2xl flex-shrink-0 leading-none mt-1 sm:mt-0">
+                    {({'fire':'🔥','earthquake':'🌍','flood':'🌊','explosion':'💥','storm':'🌪️','collapse':'🏚️','chemical':'☣️','other':'⚠️'} as Record<string,string>)[d.disaster_type] ?? '⚠️'}
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold line-clamp-2 sm:line-clamp-1 break-words">{d.title}</p>
+                    <p className="text-xs text-textSecondary mt-0.5 line-clamp-1">{[d.city, d.state].filter(Boolean).join(', ')}</p>
+                    {/* Mobile-only meta row */}
+                    <div className="sm:hidden flex items-center flex-wrap gap-2 mt-2">
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                        style={
+                          d.severity === 'Critical' ? { background: 'rgba(184, 77, 44, 0.14)', color: '#8A3618' } :
+                          d.severity === 'High'     ? { background: 'rgba(201, 123, 63, 0.16)', color: '#8A4E1C' } :
+                          d.severity === 'Medium'   ? { background: 'rgba(184, 146, 83, 0.18)', color: '#8B6A2E' } :
+                                                      { background: 'rgba(122, 140, 92, 0.18)', color: '#506235' }
+                        }
+                      >{d.severity}</span>
+                      <span className="text-[10px] text-textSecondary tabular-nums">{d.leads_count ?? 0} leads</span>
+                      {d.published_at && (
+                        <span className="text-[10px] text-textSecondary">
+                          {new Date(d.published_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                    <span className="text-xs text-textSecondary hidden sm:block">
+
+                  {/* Desktop meta cluster */}
+                  <div className="hidden sm:flex items-center gap-3 flex-shrink-0 ml-2">
+                    <span className="text-xs text-textSecondary hidden md:block">
                       {d.published_at ? new Date(d.published_at).toLocaleString('en-IN', {
                         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                       }) : ''}
@@ -298,9 +319,7 @@ export default function DashboardPage() {
                         d.severity === 'Medium'   ? { background: 'rgba(184, 146, 83, 0.18)', color: '#8B6A2E' } :
                                                     { background: 'rgba(122, 140, 92, 0.18)', color: '#506235' }
                       }
-                    >
-                      {d.severity}
-                    </span>
+                    >{d.severity}</span>
                     <span className="text-xs text-textSecondary tabular-nums hidden md:inline">{d.leads_count ?? 0} leads</span>
                     <ArrowUpRight className="w-4 h-4 text-textMuted opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>

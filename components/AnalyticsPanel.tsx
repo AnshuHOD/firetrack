@@ -49,7 +49,7 @@ export default function AnalyticsPanel({ stats, businesses, loading }: Props) {
   const trackBg = 'rgba(216, 199, 181, 0.55)';
 
   return (
-    <div className="card-luxe p-7 flex flex-col h-full gap-6 overflow-y-auto scroll-warm">
+    <div className="card-luxe p-5 sm:p-7 flex flex-col h-full gap-5 sm:gap-6 overflow-y-auto scroll-warm">
       <div>
         <p className="text-xs uppercase tracking-[0.22em] text-textSecondary">Analytics</p>
         <h3 className="font-display text-2xl font-semibold mt-1 tracking-tight">Snapshot</h3>

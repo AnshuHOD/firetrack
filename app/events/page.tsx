@@ -6,6 +6,8 @@ import AddDisasterModal from '@/components/AddDisasterModal';
 import DisasterTable from '@/components/DisasterTable';
 import Toast from '@/components/Toast';
 
+const CONTAINER = 'max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10';
+
 export default function EventsPage() {
   const [disasters, setDisasters]   = useState<any[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -85,15 +87,14 @@ export default function EventsPage() {
   ];
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full">
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
 
-      {/* HERO */}
       <section className="bg-grid-fade">
-        <div className="max-w-[1600px] mx-auto px-6 md:px-10 pt-14 md:pt-20 pb-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+        <div className={`${CONTAINER} pt-10 sm:pt-14 lg:pt-20 pb-8 sm:pb-10`}>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-end">
             <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium uppercase tracking-[0.18em] mb-6"
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] mb-5 sm:mb-6"
                 style={{ background: 'var(--bg-card)', color: 'var(--accent-brown)', border: '1px solid var(--border)' }}>
                 <Sparkles className="w-3.5 h-3.5" />
                 Lead Pipeline
@@ -102,23 +103,16 @@ export default function EventsPage() {
                 Manage events.<br />
                 <span style={{ color: 'var(--accent-brown)' }}>Generate leads.</span>
               </h1>
-              <p className="mt-5 text-lg text-textSecondary max-w-2xl leading-relaxed">
+              <p className="mt-4 sm:mt-5 text-base sm:text-lg text-textSecondary max-w-2xl leading-relaxed">
                 Add incidents by hand or let the auto-scraper ingest from the news. Each event becomes a search ring for nearby business leads.
               </p>
             </div>
-            <div className="lg:col-span-5 flex flex-wrap items-center gap-3 lg:justify-end">
-              <button
-                onClick={handleScrape}
-                disabled={isScraping}
-                className="btn-pill btn-secondary disabled:opacity-50"
-              >
+            <div className="lg:col-span-5 flex flex-wrap items-center gap-2.5 sm:gap-3 lg:justify-end">
+              <button onClick={handleScrape} disabled={isScraping} className="btn-pill btn-secondary disabled:opacity-50 flex-1 sm:flex-initial">
                 <RefreshCw className={`w-4 h-4 ${isScraping ? 'animate-spin' : ''}`} />
                 {isScraping ? 'Scraping…' : 'Auto Scrape'}
               </button>
-              <button
-                onClick={() => setShowModal(true)}
-                className="btn-pill btn-primary"
-              >
+              <button onClick={() => setShowModal(true)} className="btn-pill btn-primary flex-1 sm:flex-initial">
                 <Plus className="w-4 h-4" />
                 Add Event
               </button>
@@ -127,24 +121,22 @@ export default function EventsPage() {
         </div>
       </section>
 
-      <div className="max-w-[1600px] mx-auto px-6 md:px-10 pb-16 flex flex-col gap-8">
+      <div className={`${CONTAINER} pb-12 sm:pb-16 flex flex-col gap-6 sm:gap-8`}>
         {error && (
-          <div
-            className="flex items-center gap-3 px-5 py-4 rounded-2xl text-sm"
-            style={{ background: 'rgba(184, 77, 44, 0.08)', border: '1px solid rgba(184, 77, 44, 0.25)', color: '#8A3618' }}
-          >
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            <span>{error}</span>
-            <button onClick={load} className="ml-auto underline text-xs hover:no-underline">Retry</button>
+          <div className="flex items-start sm:items-center gap-3 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl text-sm"
+            style={{ background: 'rgba(184, 77, 44, 0.08)', border: '1px solid rgba(184, 77, 44, 0.25)', color: '#8A3618' }}>
+            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 sm:mt-0" />
+            <span className="flex-1 min-w-0 break-words">{error}</span>
+            <button onClick={load} className="underline text-xs hover:no-underline flex-shrink-0">Retry</button>
           </div>
         )}
 
-        {/* Chips row */}
-        <div className="flex gap-2.5 flex-wrap">
+        {/* Chips — wrap freely on mobile */}
+        <div className="flex gap-2 sm:gap-2.5 flex-wrap">
           {chips.map(c => (
             <span
               key={c.label}
-              className="text-xs font-semibold px-4 py-2 rounded-full inline-flex items-center gap-2"
+              className="text-xs font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full inline-flex items-center gap-2"
               style={{ background: c.bg, color: c.color, border: '1px solid var(--border)' }}
             >
               {c.label}
@@ -158,9 +150,8 @@ export default function EventsPage() {
           ))}
         </div>
 
-        {/* Table */}
         {loading ? (
-          <div className="card-luxe p-16 text-center text-textSecondary text-sm">
+          <div className="card-luxe p-10 sm:p-16 text-center text-textSecondary text-sm">
             Loading events…
           </div>
         ) : (

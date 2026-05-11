@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, MapPin, Loader2 } from 'lucide-react';
 
 const DISASTER_TYPES = [
@@ -23,7 +23,8 @@ interface Props {
   onCreated: () => void;
 }
 
-const baseInput = 'w-full bg-background border border-border rounded-2xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-accentBrown transition-colors';
+const baseInput =
+  'w-full bg-background border border-border rounded-2xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-accentBrown transition-colors min-h-[44px]';
 
 export default function AddDisasterModal({ onClose, onCreated }: Props) {
   const [form, setForm] = useState({
@@ -36,6 +37,19 @@ export default function AddDisasterModal({ onClose, onCreated }: Props) {
   const [geocoding, setGeocoding] = useState(false);
   const [geoResult, setGeoResult] = useState<{ lat: number; lng: number; display: string } | null>(null);
   const [error, setError] = useState('');
+
+  // Lock background scroll while modal is open
+  useEffect(() => {
+    document.body.classList.add('no-scroll');
+    return () => { document.body.classList.remove('no-scroll'); };
+  }, []);
+
+  // Close on Escape — good keyboard / accessibility default
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   const handleGeocode = async () => {
     if (!form.location_name.trim()) return;
@@ -97,27 +111,38 @@ export default function AddDisasterModal({ onClose, onCreated }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
       style={{ background: 'rgba(46, 27, 18, 0.45)', backdropFilter: 'blur(6px)' }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
+      onClick={onClose}
     >
-      <div className="card-luxe w-full max-w-lg shadow-soft-lg overflow-hidden">
-        <div className="flex items-center justify-between px-7 py-5 border-b" style={{ borderColor: 'var(--border)' }}>
-          <h2 id="modal-title" className="font-display text-2xl font-semibold tracking-tight">
+      {/* Bottom-sheet on mobile, centered card on sm+ */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="card-luxe w-full sm:max-w-lg shadow-soft-lg overflow-hidden flex flex-col"
+        style={{
+          maxHeight: '94vh',
+          borderRadius: 'clamp(1rem, 4vw, 1.5rem) clamp(1rem, 4vw, 1.5rem) 0 0',
+        }}
+      >
+        <div className="flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 flex-shrink-0"
+          style={{ borderBottom: '1px solid var(--border)' }}>
+          <h2 id="modal-title" className="font-display text-xl sm:text-2xl font-semibold tracking-tight">
             Add new event
           </h2>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-textSecondary hover:text-foreground transition-colors"
+            aria-label="Close modal"
+            className="touch-icon-btn w-10 h-10 text-textSecondary hover:text-foreground transition-colors"
             style={{ background: 'var(--bg-primary)' }}
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-7 py-6 space-y-5">
+        <form onSubmit={handleSubmit} className="px-5 sm:px-7 py-5 sm:py-6 space-y-4 sm:space-y-5 overflow-y-auto scroll-warm flex-1">
           {field('title', 'Incident title *', { placeholder: 'e.g. Fire at Dhanbad Coal Mine' })}
 
           <div>
@@ -131,7 +156,8 @@ export default function AddDisasterModal({ onClose, onCreated }: Props) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Stacks on mobile, side-by-side on sm+ */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs uppercase tracking-[0.14em] text-textSecondary mb-1.5">Type *</label>
               <select
@@ -156,7 +182,7 @@ export default function AddDisasterModal({ onClose, onCreated }: Props) {
 
           <div>
             <label className="block text-xs uppercase tracking-[0.14em] text-textSecondary mb-1.5">Location *</label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 value={form.location_name}
                 onChange={e => setForm(f => ({ ...f, location_name: e.target.value }))}
@@ -167,20 +193,20 @@ export default function AddDisasterModal({ onClose, onCreated }: Props) {
                 type="button"
                 onClick={handleGeocode}
                 disabled={geocoding || !form.location_name.trim()}
-                className="btn-pill btn-secondary disabled:opacity-40 whitespace-nowrap"
+                className="btn-pill btn-secondary disabled:opacity-40 whitespace-nowrap justify-center"
               >
                 {geocoding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
                 {geocoding ? 'Finding…' : 'Geocode'}
               </button>
             </div>
             {geoResult && (
-              <p className="text-xs mt-2" style={{ color: '#506235' }}>
+              <p className="text-xs mt-2 break-words" style={{ color: '#506235' }}>
                 ✓ {geoResult.lat.toFixed(4)}, {geoResult.lng.toFixed(4)} — {geoResult.display.length > 60 ? `${geoResult.display.slice(0, 60)}…` : geoResult.display}
               </p>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('city', 'City', { placeholder: 'Mumbai' })}
             {field('state', 'State', { placeholder: 'Maharashtra' })}
           </div>
@@ -202,19 +228,18 @@ export default function AddDisasterModal({ onClose, onCreated }: Props) {
           </div>
 
           {error && (
-            <p
-              className="text-xs px-4 py-2.5 rounded-2xl"
-              style={{ color: '#8A3618', background: 'rgba(184, 77, 44, 0.10)' }}
-            >
+            <p className="text-xs px-4 py-2.5 rounded-2xl break-words"
+              style={{ color: '#8A3618', background: 'rgba(184, 77, 44, 0.10)' }}>
               {error}
             </p>
           )}
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="btn-pill btn-secondary flex-1">
+          <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3 pt-2 sticky bottom-0 -mx-5 sm:mx-0 px-5 sm:px-0 pb-1 sm:pb-0"
+            style={{ background: 'var(--bg-card)' }}>
+            <button type="button" onClick={onClose} className="btn-pill btn-secondary flex-1 justify-center">
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="btn-pill btn-primary flex-1 disabled:opacity-50">
+            <button type="submit" disabled={loading} className="btn-pill btn-primary flex-1 justify-center disabled:opacity-50">
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading ? 'Creating…' : 'Create & search'}
             </button>

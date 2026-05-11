@@ -5,6 +5,8 @@ import { AlertTriangle, Sparkles } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import DisasterBadge, { SeverityBadge } from '@/components/DisasterBadge';
 
+const CONTAINER = 'max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10';
+
 const MapView = dynamic(() => import('@/components/MapView'), {
   ssr: false,
   loading: () => (
@@ -56,13 +58,12 @@ export default function MapPage() {
     : businesses;
 
   return (
-    <div className="flex flex-col">
-      {/* Compact heading row — kept slim so the map dominates the viewport */}
+    <div className="flex flex-col w-full">
       <section className="bg-grid-fade">
-        <div className="max-w-[1600px] mx-auto px-6 md:px-10 pt-10 pb-6">
-          <div className="flex items-end justify-between flex-wrap gap-4">
+        <div className={`${CONTAINER} pt-8 sm:pt-10 pb-5 sm:pb-6`}>
+          <div className="flex items-end justify-between flex-wrap gap-3 sm:gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium uppercase tracking-[0.18em] mb-4"
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] mb-3 sm:mb-4"
                 style={{ background: 'var(--bg-card)', color: 'var(--accent-brown)', border: '1px solid var(--border)' }}>
                 <Sparkles className="w-3.5 h-3.5" />
                 Geospatial
@@ -71,30 +72,28 @@ export default function MapPage() {
                 Map your <span style={{ color: 'var(--accent-brown)' }}>territory</span>.
               </h1>
             </div>
-            <div className="text-sm text-textSecondary">
+            <div className="text-xs sm:text-sm text-textSecondary">
               {filteredBusinesses.length} pins · {disasters.length} events
             </div>
           </div>
         </div>
       </section>
 
-      <div className="max-w-[1600px] mx-auto px-6 md:px-10 pb-10 flex flex-col gap-4 w-full">
+      <div className={`${CONTAINER} pb-8 sm:pb-10 flex flex-col gap-4`}>
         {error && (
-          <div
-            className="flex items-center gap-3 px-5 py-4 rounded-2xl text-sm"
-            style={{ background: 'rgba(184, 77, 44, 0.08)', border: '1px solid rgba(184, 77, 44, 0.25)', color: '#8A3618' }}
-          >
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            <span>{error}</span>
+          <div className="flex items-start sm:items-center gap-3 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl text-sm"
+            style={{ background: 'rgba(184, 77, 44, 0.08)', border: '1px solid rgba(184, 77, 44, 0.25)', color: '#8A3618' }}>
+            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 sm:mt-0" />
+            <span className="flex-1 min-w-0 break-words">{error}</span>
           </div>
         )}
 
-        {/* Mobile select */}
+        {/* Mobile: event picker dropdown replaces sidebar */}
         <div className="md:hidden">
           <select
             value={selectedId ?? ''}
             onChange={e => setSelectedId(e.target.value || null)}
-            className="w-full bg-card border border-border rounded-full px-5 py-3 text-sm text-foreground focus:outline-none focus:border-accentBrown transition-colors"
+            className="w-full bg-card border border-border rounded-full px-5 py-3 text-sm text-foreground focus:outline-none focus:border-accentBrown transition-colors min-h-[44px]"
           >
             <option value="">All events ({businesses.length} leads)</option>
             {disasters.map(d => (
@@ -105,9 +104,9 @@ export default function MapPage() {
           </select>
         </div>
 
-        {/* Map + sidebar — definite height so Leaflet has a real canvas */}
-        <div className="flex gap-5 w-full" style={{ height: '72vh', minHeight: 620 }}>
-          <aside className="hidden md:flex w-80 flex-shrink-0 card-luxe overflow-hidden flex-col">
+        {/* Map + sidebar — sidebar hidden on mobile, height shrinks on small screens */}
+        <div className="flex flex-col md:flex-row gap-4 sm:gap-5 w-full" style={{ minHeight: 460 }}>
+          <aside className="hidden md:flex md:w-72 lg:w-80 flex-shrink-0 card-luxe overflow-hidden flex-col" style={{ height: '72vh', minHeight: 620 }}>
             <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
               <p className="text-[11px] font-semibold text-textSecondary uppercase tracking-[0.18em]">
                 Events <span className="text-textMuted">· {disasters.length}</span>
@@ -177,8 +176,11 @@ export default function MapPage() {
             </div>
           </aside>
 
-          {/* Map fills remaining space; absolute positioning inside guarantees Leaflet sees a sized container */}
-          <div className="flex-1 min-w-0 relative">
+          {/* Map — full width mobile, fills remaining desktop */}
+          <div
+            className="flex-1 min-w-0 relative"
+            style={{ height: 'clamp(420px, 65vh, 720px)' }}
+          >
             <div className="absolute inset-0">
               <MapView
                 disasters={disasters}
@@ -190,16 +192,16 @@ export default function MapPage() {
         </div>
 
         {selected && (
-          <div className="card-luxe px-6 py-4 flex items-center gap-4 flex-wrap">
+          <div className="card-luxe px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 flex-wrap">
             <DisasterBadge type={selected.disaster_type} />
-            <p className="text-sm font-semibold line-clamp-1">{selected.title}</p>
+            <p className="text-sm font-semibold line-clamp-1 flex-1 min-w-0 break-words">{selected.title}</p>
             <SeverityBadge severity={selected.severity} />
             {selected.latitude && (
               <span className="text-xs text-textSecondary hidden sm:inline tabular-nums">
                 {selected.latitude.toFixed(4)}, {selected.longitude.toFixed(4)}
               </span>
             )}
-            <span className="text-xs text-textSecondary ml-auto">
+            <span className="text-xs text-textSecondary w-full sm:w-auto sm:ml-auto">
               {filteredBusinesses.length} businesses · {selected.radius_km || 2} km radius
             </span>
           </div>

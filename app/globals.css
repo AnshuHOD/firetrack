@@ -7,38 +7,45 @@
 @layer base {
   :root {
     /* Primary palette — Avani luxury */
-    --bg-primary:        #F5EFE6;   /* page background */
-    --bg-secondary:      #EFE4D1;   /* alternating sections */
-    --bg-card:           #F8F3EC;   /* cards */
-    --bg-hover:          #EADCCB;   /* hover surface */
+    --bg-primary:        #F5EFE6;
+    --bg-secondary:      #EFE4D1;
+    --bg-card:           #F8F3EC;
+    --bg-hover:          #EADCCB;
 
-    --text-primary:      #2E1B12;   /* deep espresso */
-    --text-secondary:    #6B5544;   /* muted brown */
+    --text-primary:      #2E1B12;
+    --text-secondary:    #6B5544;
     --text-muted:        #9A7F66;
 
-    --border:            #D8C7B5;   /* soft warm border */
+    --border:            #D8C7B5;
     --border-strong:     #BFA88E;
 
     /* Brand / action */
-    --navbar:            #3B2416;   /* dark espresso navbar */
+    --navbar:            #3B2416;
     --btn-bg:            #4A2D1D;
     --btn-hover:         #6A442E;
     --accent-brown:      #9C6B4A;
 
     /* Semantic accents (earth-toned) */
-    --accent-red:        #B84D2C;   /* terracotta — fire / critical */
-    --accent-orange:     #C97B3F;   /* warm rust — high / medium */
-    --accent-yellow:     #B89253;   /* mustard */
-    --accent-green:      #7A8C5C;   /* olive — success / low */
-    --accent-blue:       #9C6B4A;   /* mapped to brown — primary CTA */
+    --accent-red:        #B84D2C;
+    --accent-orange:     #C97B3F;
+    --accent-yellow:     #B89253;
+    --accent-green:      #7A8C5C;
+    --accent-blue:       #9C6B4A;
   }
 
+  /* Prevent ANY horizontal scrolling site-wide (mobile-first guard) */
   html, body {
+    max-width: 100%;
+    overflow-x: hidden;
     background: var(--bg-primary);
     color: var(--text-primary);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
   }
+
+  /* Make every form element honor parent container width — kills tiny overflow bugs on iOS */
+  input, select, textarea, button { max-width: 100%; }
 
   /* Chunky bold display family for hero / display headings */
   .font-display {
@@ -49,20 +56,28 @@
 }
 
 @layer utilities {
-  /* Warm grid background — subtle editorial texture */
+  /* Warm grid background — scales down on mobile to avoid huge boxes */
   .bg-grid {
     background-image:
       linear-gradient(to right, rgba(155, 107, 74, 0.07) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(155, 107, 74, 0.07) 1px, transparent 1px);
-    background-size: 56px 56px;
+    background-size: 32px 32px;
   }
+  @media (min-width: 768px) {
+    .bg-grid { background-size: 56px 56px; }
+  }
+
   .bg-grid-fade {
     background-image:
       radial-gradient(circle at 50% 0%, rgba(245, 239, 230, 0) 0%, var(--bg-primary) 75%),
       linear-gradient(to right, rgba(155, 107, 74, 0.08) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(155, 107, 74, 0.08) 1px, transparent 1px);
-    background-size: 100% 100%, 56px 56px, 56px 56px;
+    background-size: 100% 100%, 32px 32px, 32px 32px;
   }
+  @media (min-width: 768px) {
+    .bg-grid-fade { background-size: 100% 100%, 56px 56px, 56px 56px; }
+  }
+
   .bg-dots {
     background-image: radial-gradient(rgba(155, 107, 74, 0.18) 1px, transparent 1px);
     background-size: 22px 22px;
@@ -75,9 +90,10 @@
     box-shadow: 0 2px 4px rgba(46, 27, 18, 0.05), 0 24px 48px -16px rgba(46, 27, 18, 0.12);
   }
 
-  /* Pill button base */
+  /* Pill button — bumped vertical padding so mobile tap target ≥ 44px */
   .btn-pill {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-sm font-semibold transition-all;
+    min-height: 44px;
   }
   .btn-primary {
     background: var(--btn-bg);
@@ -98,30 +114,44 @@
     border-radius: 1.5rem;
   }
 
-  /* Input styling */
   .input-luxe {
     background: var(--bg-primary);
     border: 1px solid var(--border);
     border-radius: 9999px;
-    padding: 0.625rem 1rem;
+    padding: 0.75rem 1rem;
     color: var(--text-primary);
     transition: border-color 150ms, background 150ms;
+    min-height: 44px;
   }
   .input-luxe:focus { outline: none; border-color: var(--accent-brown); background: var(--bg-card); }
 
-  .text-display-xl { font-size: clamp(2.75rem, 6vw, 5.25rem); line-height: 0.95; }
-  .text-display-lg { font-size: clamp(2.25rem, 4.5vw, 3.5rem); line-height: 1; }
-  .text-display-md { font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.05; }
+  /* Responsive display sizes — clamp scales from mobile to desktop without media queries */
+  .text-display-xl { font-size: clamp(2.5rem, 8vw, 5.25rem); line-height: 0.95; }
+  .text-display-lg { font-size: clamp(2rem, 6vw, 3.5rem);   line-height: 1; }
+  .text-display-md { font-size: clamp(1.625rem, 4.5vw, 2.5rem); line-height: 1.05; }
 
-  /* Subtle hover lift */
+  /* Touch-friendly icon button: ≥ 44 × 44 */
+  .touch-icon-btn {
+    @apply inline-flex items-center justify-center rounded-full transition-colors;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .hover-lift { transition: transform 200ms ease, box-shadow 200ms ease; }
   .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 16px 32px -16px rgba(46, 27, 18, 0.18); }
 
-  /* Scrollbar */
+  /* Hide hover-lift transform on touch devices to avoid sticky-hover glitch */
+  @media (hover: none) { .hover-lift:hover { transform: none; } }
+
   .scroll-warm::-webkit-scrollbar { width: 8px; height: 8px; }
   .scroll-warm::-webkit-scrollbar-track { background: transparent; }
   .scroll-warm::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
   .scroll-warm::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+  /* Honor user motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
 }
 
 /* Leaflet popup re-skinned for warm theme */
@@ -137,3 +167,6 @@
 .map-tiles-warm { filter: sepia(0.18) saturate(0.85) brightness(0.97) contrast(1.02); }
 
 @keyframes ping-soft { 75%, 100% { transform: scale(2); opacity: 0; } }
+
+/* Body lock helper for open drawer / modal */
+.no-scroll { overflow: hidden; touch-action: none; }
